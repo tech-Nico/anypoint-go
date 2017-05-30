@@ -31,11 +31,9 @@ func main() {
 func login (uri string){
 	username, password := credentials()
 
-	fmt.Printf("\nUsername: %s\n", username)
-	fmt.Printf("Pwd: %s\n", password)
-
 	//login(username, password)
-	rest.NewAuth(uri, username, password)
+	auth := rest.NewAuth(uri, username, password)
+	auth.Me()
 
 }
 

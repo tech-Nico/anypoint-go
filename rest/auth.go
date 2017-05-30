@@ -55,7 +55,7 @@ func login(httpClient *http.Client, uri, pUsername, pPassword string) string {
 
 	authToken := new(AuthToken)
 
-	res, err := sling.
+	_, err := sling.
 		New().
 		Client(httpClient).
 		Base(uri).
@@ -68,7 +68,20 @@ func login(httpClient *http.Client, uri, pUsername, pPassword string) string {
 		os.Exit(1)
 	} else {
 		log.Print("Been able to login: ", *authToken)
-		log.Print("Response:", res)
 	}
+
 	return authToken.BearerToken
+}
+
+func (auth *Auth) Me() string {
+	log.Printf("authtoken while calling me %s", auth.token)
+	ciccio := ""
+	req, err := sling.
+		New().
+		Client(auth.client).
+		Base(auth.uri).
+		Get(ME).BodyForm(ciccio).Receive()
+	log.Printf("The response: ", req.)
+	log.Printf("The error: ", err)
+	return "me"
 }
