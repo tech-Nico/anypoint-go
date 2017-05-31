@@ -6,6 +6,7 @@ import (
 	"os"
 	"net/http"
 	"crypto/tls"
+	"io/ioutil"
 )
 
 type Auth struct {
@@ -28,7 +29,7 @@ type AuthToken struct {
 
 const (
 	LOGIN string = "/accounts/login"
-	ME string = "/accounts/me"
+	ME string = "/accounts/api/me"
 )
 
 
@@ -75,13 +76,25 @@ func login(httpClient *http.Client, uri, pUsername, pPassword string) string {
 
 func (auth *Auth) Me() string {
 	log.Printf("authtoken while calling me %s", auth.token)
-	ciccio := ""
-	req, err := sling.
-		New().
+
+	req, err := sling.New().
 		Client(auth.client).
 		Base(auth.uri).
-		Get(ME).BodyForm(ciccio).Receive()
-	log.Printf("The response: ", req.)
-	log.Printf("The error: ", err)
-	return "me"
+		Add("Authorization", "Bearer " + auth.token).
+		Get(ME).Request()
+
+	res, err := auth.client.Do(req)
+	defer res.Body.Close()
+
+
+	if err != nil {
+		log.Fatal("Error while querying for user's details: ", err)
+	}
+	// Check that the server actually sent compressed data
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		log.Fatal("Error while reading response for %s : %s ", ME, err)
+	}
+
+	return string(body)
 }
