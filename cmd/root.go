@@ -26,7 +26,7 @@ var cfgFile string
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
-	Use:   "anypoint-cli-cobra",
+	Use:   "anypoint-cli",
 	Short: "A brief description of your application",
 	Long: `A longer description that spans multiple lines and likely contains
 examples and usage of using your application. For example:
@@ -54,7 +54,7 @@ func init() {
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
-	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.anypoint-cli-cobra.yaml)")
+	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.anypoint-cli.yaml)")
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
@@ -76,7 +76,7 @@ func initConfig() {
 
 		// Search config in home directory with name ".anypoint-cli-cobra" (without extension).
 		viper.AddConfigPath(home)
-		viper.SetConfigName(".anypoint-cli-cobra")
+		viper.SetConfigName(".anypoint-cli")
 	}
 
 	viper.AutomaticEnv() // read in environment variables that match
