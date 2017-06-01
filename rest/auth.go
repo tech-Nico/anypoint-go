@@ -28,8 +28,9 @@ type AuthToken struct {
 }
 
 const (
-	LOGIN string = "/accounts/login"
-	ME string = "/accounts/api/me"
+	LOGIN     string = "/accounts/login"
+	ME        string = "/accounts/api/me"
+	HIERARCHY string = "/accounts/api/hierarchy"
 )
 
 
@@ -97,4 +98,29 @@ func (auth *Auth) Me() string {
 	}
 
 	return string(body)
+}
+
+func (auth *Auth) Hierarchy() string {
+	log.Printf("authtoken while calling me %s", auth.token)
+	body := auth.getString(HIERARCHY)
+	return string(body)
+}
+
+func (auth *Auth) getString(path string) []byte {
+	req, err := sling.New().
+		Client(auth.client).
+		Base(auth.uri).
+		Add("Authorization", "Bearer "+auth.token).
+		Get(path).Request()
+	res, err := auth.client.Do(req)
+	defer res.Body.Close()
+	if err != nil {
+		log.Fatal("Error while querying for %s: ", path, err)
+	}
+	// Check that the server actually sent compressed data
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		log.Fatal("Error while reading response for %s : %s ", path, err)
+	}
+	return body
 }

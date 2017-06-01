@@ -1,14 +1,15 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
 	"os"
-	"bufio"
-	"golang.org/x/crypto/ssh/terminal"
-	"syscall"
 	"strings"
+	"syscall"
+
 	"github.com/tech-nico/anypoint-cli/rest"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 var hostname = flag.String("hostname", "", "MuleSoft Anypoint platform hostname")
@@ -20,7 +21,7 @@ const HOSTNAME_KEY string = "ANYPOINT_CLI_HOSTNAME"
 func main() {
 	flag.Parse()
 
-	if *hostname == ""{
+	if *hostname == "" {
 		fmt.Println("--hostname is a mandatory parameter")
 		os.Exit(1)
 	}
@@ -28,7 +29,7 @@ func main() {
 	login(*hostname)
 }
 
-func login (uri string){
+func login(uri string) {
 	username, password := credentials()
 
 	//login(username, password)
@@ -37,7 +38,7 @@ func login (uri string){
 
 }
 
-func credentials() (string, string){
+func credentials() (string, string) {
 	reader := bufio.NewReader(os.Stdin)
 
 	fmt.Print("Enter username:")
