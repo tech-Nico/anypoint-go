@@ -23,6 +23,7 @@ import (
 )
 
 var cfgFile string
+var outputFormat string
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
@@ -36,7 +37,9 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
-	//	Run: func(cmd *cobra.Command, args []string) { },
+	//Run: func(cmd *cobra.Command, args []string) {
+	//	fmt.Printf("Call to root with args %s \n", args)
+	//},
 }
 
 // Execute adds all child commands to the root command sets flags appropriately.
@@ -51,14 +54,12 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
+	// Global flags
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.anypoint-cli.yaml)")
-
+	RootCmd.PersistentFlags().StringVar(&outputFormat, "o", "json", "determines output format (json/yaml/csv)")
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
-	RootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	//RootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -74,7 +75,7 @@ func initConfig() {
 			os.Exit(1)
 		}
 
-		// Search config in home directory with name ".anypoint-cli-cobra" (without extension).
+		// Search config in home directory with name ".anypoint-cli" (without extension).
 		viper.AddConfigPath(home)
 		viper.SetConfigName(".anypoint-cli")
 	}

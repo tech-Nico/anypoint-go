@@ -11,8 +11,8 @@ import (
 
 type Auth struct {
 	client *http.Client
-	uri string
-	token string
+	uri    string
+	Token  string
 }
 
 
@@ -46,7 +46,7 @@ func NewAuth(uri, username, password string) *Auth{
 	}
 }
 
-// Login the given user and return the bearer token
+// Login the given user and return the bearer Token
 func login(httpClient *http.Client, uri, pUsername, pPassword string) string {
 
 
@@ -76,12 +76,12 @@ func login(httpClient *http.Client, uri, pUsername, pPassword string) string {
 }
 
 func (auth *Auth) Me() string {
-	log.Printf("authtoken while calling me %s", auth.token)
+	log.Printf("authtoken while calling me %s", auth.Token)
 
 	req, err := sling.New().
 		Client(auth.client).
 		Base(auth.uri).
-		Add("Authorization", "Bearer " + auth.token).
+		Add("Authorization", "Bearer "+auth.Token).
 		Get(ME).Request()
 
 	res, err := auth.client.Do(req)
@@ -101,7 +101,7 @@ func (auth *Auth) Me() string {
 }
 
 func (auth *Auth) Hierarchy() string {
-	log.Printf("authtoken while calling me %s", auth.token)
+	log.Printf("authtoken while calling me %s", auth.Token)
 	body := auth.getString(HIERARCHY)
 	return string(body)
 }
@@ -110,7 +110,7 @@ func (auth *Auth) getString(path string) []byte {
 	req, err := sling.New().
 		Client(auth.client).
 		Base(auth.uri).
-		Add("Authorization", "Bearer "+auth.token).
+		Add("Authorization", "Bearer "+auth.Token).
 		Get(path).Request()
 	res, err := auth.client.Do(req)
 	defer res.Body.Close()

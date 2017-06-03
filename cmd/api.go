@@ -22,13 +22,14 @@ import (
 // apiCmd represents the api command
 var apiCmd = &cobra.Command{
 	Use:   "api",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Work with APIs managed by MuleSoft Anypoint Platform",
+	Long: `Manage APIs created and governed onto the MuleSoft Anypoint Platform.
+	This command allows you to:
+	List apis
+	List versions
+	Create APIs and API versions
+	Configure APIs
+	Deploy API proxies`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("api called")
 	},
