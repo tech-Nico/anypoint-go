@@ -105,8 +105,8 @@ func (auth *Auth) httpGet(path string) []byte {
 func (auth *Auth) findBusinessGroup(path string) string {
 	currentOrgId := ""
 
-	//groups := createBusinessGroupPath()
-	groups := []string
+	groups := auth.createBusinessGroupPath(path)
+
 	var data map[string]interface{}
 	hierarchy := auth.Me()
 	if err := json.Unmarshal(hierarchy, &data); err != nil {
@@ -138,36 +138,35 @@ func (auth *Auth) findBusinessGroup(path string) string {
 }
 
 func (auth *Auth) createBusinessGroupPath(businessGroup string) []string {
-
-	if businessGroup == "" || businessGroup == nil {
-		return "";
+	if businessGroup == "" {
+		return make([]string, 0)
 	}
 
-	groups := []string
-
+	groups := []string{}
 	group := ""
-
-	for pos, char := range businessGroup {
-		if char == '\\' {
+	pos := 0
+	for ; pos < len(businessGroup)-1; pos++ {
+		currChar := businessGroup[pos]
+		if currChar == '\\' {
 			// Double backslash maps to business group with one backslash
 			if businessGroup[pos+1] == '\\' {
 				group += "\\"
+				pos++
 				// Single backslash starts a new business group
 			} else {
-				groups += [group]
-				group = new
-				StringBuilder();
+				groups = append(groups, group)
+				group = ""
 			}
-		} else // Non backslash characters are mapped to the group
-		{
-			group.append(businessGroup.charAt(i));
+			// Non backslash characters are mapped to the group
+		} else {
+			group += string(currChar)
 		}
 	}
 
-	if (i < businessGroup.length()) // Do not end with backslash {
-	group.append(businessGroup.charAt(businessGroup.length() - 1));
-}
-groups.add(group.toString());
+	if pos < len(businessGroup) { // Do not end with backslash {
+		group += string(businessGroup[len(businessGroup)-1])
+	}
+	groups = append(groups, string(group))
 
-return groups.toArray(new String[0]);
+	return groups
 }
