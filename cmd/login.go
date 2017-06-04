@@ -27,6 +27,7 @@ import (
 var username string
 var password string
 var uri string
+var orgPath string
 
 // loginCmd represents the login command
 var loginCmd = &cobra.Command{
@@ -50,9 +51,13 @@ var loginCmd = &cobra.Command{
 
 		//login(username, password)
 		auth := rest.NewAuth(uri, username, password)
-		fmt.Printf("Login successful. %s", auth.Token)
-
+		fmt.Printf("Login successful. Got token '%s'", auth.Token)
+		if orgPath != "" {
+			orgId := auth.FindBusinessGroup(orgPath)
+			fmt.Printf("The orgId is '%s'\n", orgId)
+		}
 		auth.Me()
+
 
 		return nil
 	},
@@ -72,6 +77,7 @@ func init() {
 	loginCmd.Flags().StringVar(&username, "username", "", "Specify the username to login into Anypoint Platform")
 	loginCmd.Flags().StringVar(&password, "password", "", "Specify the password to login into Anypoint Platform")
 	loginCmd.Flags().StringVar(&uri, "uri", "", "Specify the url of the Anypoint Platform instance where you would like to login to")
+	loginCmd.Flags().StringVar(&orgPath, "org", "", "Specify the path to the org you want to manage resources for. Ex: Root\\Sub Org")
 }
 
 func promptForPassword() (string) {

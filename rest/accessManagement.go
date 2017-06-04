@@ -8,6 +8,8 @@ import (
 	"crypto/tls"
 	"io/ioutil"
 	"encoding/json"
+	"fmt"
+	"strings"
 )
 
 type Auth struct {
@@ -28,7 +30,7 @@ type AuthToken struct {
 const (
 	LOGIN     string = "/accounts/login"
 	ME        string = "/accounts/api/me"
-	HIERARCHY string = "/accounts/api/hierarchy"
+	HIERARCHY string = "/accounts/api/organizations/{orgId}/hierarchy"
 )
 
 func NewAuth(uri, username, password string) *Auth {
@@ -78,9 +80,16 @@ func (auth *Auth) Me() []byte {
 }
 
 func (auth *Auth) Hierarchy() []byte {
-	log.Printf("Call to %s", HIERARCHY)
-	body := auth.httpGet(HIERARCHY)
-	return body
+	me := auth.Me()
+	var data map[string]interface{}
+	if err := json.Unmarshal(me, &data); err != nil {
+		fmt.Printf("Error while marshalling JSON response to 'Me' endpoint: %v", err)
+		os.Exit(1)
+	}
+	orgId := data["user"].(map[string]interface{})["organization"].(map[string]interface{})["id"].(string)
+	path := strings.Replace(HIERARCHY, "{orgId}", orgId, -1)
+
+	return auth.httpGet(path)
 }
 
 func (auth *Auth) httpGet(path string) []byte {
@@ -102,20 +111,21 @@ func (auth *Auth) httpGet(path string) []byte {
 	return body
 }
 
-func (auth *Auth) findBusinessGroup(path string) string {
+func (auth *Auth) FindBusinessGroup(path string) string {
 	currentOrgId := ""
 
 	groups := auth.createBusinessGroupPath(path)
 
 	var data map[string]interface{}
-	hierarchy := auth.Me()
+	hierarchy := auth.Hierarchy()
+
 	if err := json.Unmarshal(hierarchy, &data); err != nil {
 		panic("Error while querying for hierarchy..")
 	}
 
-	subOrganizations := json["subOrganizations"].([]interface{});
+	subOrganizations := data["subOrganizations"].([]interface{});
 	if len(groups) == 0 {
-		return json["id"].(string)
+		return data["id"].(string)
 	}
 
 	for _, currGroup := range groups {
