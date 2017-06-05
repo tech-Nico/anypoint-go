@@ -20,6 +20,7 @@ import (
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/fsnotify/fsnotify"
 )
 
 var cfgFile string
@@ -64,6 +65,18 @@ func init() {
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
+	setupViper()
+}
+func setupViper() {
+	viper.WatchConfig()
+	viper.SetEnvPrefix("ANYPOINT_CLI")
+	viper.BindEnv(KEY_ORG_ID)
+	viper.BindEnv(KEY_USERNAME)
+	viper.BindEnv(KEY_PASSWORD)
+
+	viper.OnConfigChange(func(e fsnotify.Event) {
+		fmt.Println("Config file changed:", e.Name)
+	})
 	if cfgFile != "" {
 		// Use config file from the flag.
 		viper.SetConfigFile(cfgFile)
@@ -79,9 +92,8 @@ func initConfig() {
 		viper.AddConfigPath(home)
 		viper.SetConfigName(".anypoint-cli")
 	}
-
-	viper.AutomaticEnv() // read in environment variables that match
-
+	viper.AutomaticEnv()
+	// read in environment variables that match
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Println("Using config file:", viper.ConfigFileUsed())
