@@ -18,14 +18,6 @@ import (
 )
 
 func main() {
-	// flag.Parse()
-
-	// if *hostname == "" {
-	// 	fmt.Println("--hostname is a mandatory parameter")
-	// 	os.Exit(1)
-	// }
-
-	// login(*hostname)
 
 	cmd.Execute()
 }

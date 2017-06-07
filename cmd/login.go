@@ -50,19 +50,16 @@ var loginCmd = &cobra.Command{
 			password = promptForPassword()
 		}
 
-		//login(username, password)
 		auth := rest.NewAuth(uri, username, password)
 		fmt.Printf("Login successful. Got token '%s'", auth.Token)
-
-		viper.Set(KEY_USERNAME, username)
-		viper.Set(KEY_PASSWORD, password)
-
+		viper.Set(KEY_TOKEN, auth.Token)
+		viper.Set(KEY_URI, uri)
 		if orgPath != "" {
 			orgId := auth.FindBusinessGroup(orgPath)
 			fmt.Printf("The orgId is '%s'\n", orgId)
 			viper.Set(KEY_ORG_ID, orgId)
 		}
-
+		WriteConfig()
 		//All good
 		return nil
 	},
@@ -80,12 +77,10 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	loginCmd.Flags().StringVar(&username, "username", "", "Specify the username to login into Anypoint Platform")
-	viper.BindPFlag(KEY_USERNAME, loginCmd.Flags().Lookup(KEY_USERNAME))
 	loginCmd.Flags().StringVar(&password, "password", "", "Specify the password to login into Anypoint Platform")
-	viper.BindPFlag(KEY_PASSWORD, loginCmd.Flags().Lookup(KEY_PASSWORD))
 	loginCmd.Flags().StringVar(&uri, "uri", "", "Specify the url of the Anypoint Platform instance where you would like to login to")
 	loginCmd.Flags().StringVar(&orgPath, "org", "", "Specify the path to the org you want to manage resources for. Ex: Root\\Sub Org")
-	viper.BindPFlag(KEY_ORG_ID, loginCmd.Flags().Lookup(KEY_ORG_ID))
+
 }
 
 func promptForPassword() (string) {
