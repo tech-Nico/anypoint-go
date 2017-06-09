@@ -1,14 +1,15 @@
 package cmd
 
 import (
-	"github.com/spf13/viper"
+	"encoding/json"
 	"fmt"
 	"github.com/mitchellh/go-homedir"
-	"os"
+	"github.com/spf13/viper"
 	"io/ioutil"
-	"encoding/json"
 	"log"
+	"os"
 )
+
 const (
 	KEY_ORG_ID       string = "orgId"
 	KEY_TOKEN        string = "authToken"

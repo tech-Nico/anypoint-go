@@ -16,13 +16,13 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/spf13/cobra"
-	"golang.org/x/crypto/ssh/terminal"
-	"syscall"
-	"strings"
-	"github.com/tech-nico/anypoint-cli/rest"
 	"errors"
+	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/tech-nico/anypoint-cli/rest"
+	"golang.org/x/crypto/ssh/terminal"
+	"strings"
+	"syscall"
 )
 
 var username string
@@ -83,7 +83,7 @@ func init() {
 
 }
 
-func promptForPassword() (string) {
+func promptForPassword() string {
 
 	fmt.Print("Enter password:")
 	bytepassword, _ := terminal.ReadPassword(int(syscall.Stdin))

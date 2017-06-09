@@ -1,14 +1,14 @@
 package rest
 
 import (
-	"github.com/dghubble/sling"
-	"log"
-	"os"
-	"net/http"
 	"crypto/tls"
-	"io/ioutil"
 	"encoding/json"
 	"fmt"
+	"github.com/dghubble/sling"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"os"
 	"strings"
 )
 
@@ -123,7 +123,7 @@ func (auth *Auth) FindBusinessGroup(path string) string {
 		panic("Error while querying for hierarchy..")
 	}
 
-	subOrganizations := data["subOrganizations"].([]interface{});
+	subOrganizations := data["subOrganizations"].([]interface{})
 	if len(groups) == 0 {
 		return data["id"].(string)
 	}
@@ -144,7 +144,7 @@ func (auth *Auth) FindBusinessGroup(path string) string {
 		panic("Cannot find business group " + path)
 	}
 
-	return currentOrgId;
+	return currentOrgId
 }
 
 func (auth *Auth) createBusinessGroupPath(businessGroup string) []string {
