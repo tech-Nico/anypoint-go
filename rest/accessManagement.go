@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/dghubble/sling"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -33,11 +32,19 @@ const (
 	HIERARCHY string = "/accounts/api/organizations/{orgId}/hierarchy"
 )
 
-func NewAuth(uri, username, password string) *Auth {
+func NewAuthWithToken(uri, token string) *Auth {
 	transCfg := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, // ignore expired SSL certificates
 	}
 	client := &http.Client{Transport: transCfg}
+	return &Auth{
+		client,
+		uri,
+		token,
+	}
+}
+
+func NewAuthWithCredentials(uri, username, password string) *Auth {
 	return &Auth{
 		client,
 		uri,
@@ -92,24 +99,6 @@ func (auth *Auth) Hierarchy() []byte {
 	return auth.httpGet(path)
 }
 
-func (auth *Auth) httpGet(path string) []byte {
-	req, err := sling.New().
-		Client(auth.client).
-		Base(auth.uri).
-		Add("Authorization", "Bearer "+auth.Token).
-		Get(path).Request()
-	res, err := auth.client.Do(req)
-	defer res.Body.Close()
-	if err != nil {
-		log.Fatal("Error while querying for %s: ", path, err)
-	}
-	// Check that the server actually sent compressed data
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		log.Fatal("Error while reading response for %s : %s ", path, err)
-	}
-	return body
-}
 
 func (auth *Auth) FindBusinessGroup(path string) string {
 	currentOrgId := ""

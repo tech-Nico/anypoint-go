@@ -50,7 +50,7 @@ var loginCmd = &cobra.Command{
 			password = promptForPassword()
 		}
 
-		auth := rest.NewAuth(uri, username, password)
+		auth := rest.NewAuthWithCredentials(uri, username, password)
 		fmt.Printf("Login successful. Got token '%s'", auth.Token)
 		viper.Set(KEY_TOKEN, auth.Token)
 		viper.Set(KEY_URI, uri)
