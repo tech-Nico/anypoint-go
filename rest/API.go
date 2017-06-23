@@ -1,21 +1,21 @@
 package rest
 
 import (
-	"net/http"
 	"strings"
 	"reflect"
+	"encoding/json"
+	"fmt"
+	"os"
 )
 
 const (
-	base_path = "/apiplatform/repository/v2"
-	org       = "/organizations/{orgId}"
-	search    = "/apis?ascending=false&limit={limit}&offset={offset}&query={APIName}&sort={sortOrder}"
+	BASE_PATH      = "/apiplatform/repository/v2"
+	ORG            = "/organizations/{orgId}"
+	SEARCH_BY_NAME = "/apis?ascending=false&limit={limit}&offset={offset}&query={APIName}&sort={sortOrder}"
 )
 
 type API struct {
-	client *http.Client
-	uri    string
-	token  string
+	client *RestClient
 }
 
 type Filters string
@@ -28,47 +28,54 @@ const (
 )
 
 type SearchParameters struct {
-	limit     int
-	offset    int
-	name      string
-	sortOrder string `default:"createdDate"`
-	filter    Filters `default:"all""`
+	Name      string
+	Limit     int
+	Offset    int
+	SortOrder string `default:"createdDate"`
+	Filter    Filters `default:"all""`
 }
 
-func NewApi(client *http.Client, uri, token string) (*API) {
+func NewApi(uri, token string) (*API) {
+	client := NewClient(uri)
+	client.AddAuthHeader(token)
+
 	return &API{
 		client,
-		uri,
-		token,
 	}
 }
 
 //Search an API by name
-func (api *API) ByName(orgId string, params SearchParameters) string {
-	typ := reflect.TypeOf(params)
+func (api *API) ByName(orgId string, params *SearchParameters) map[string]interface{} {
+	typ := reflect.TypeOf(&params)
 
-	if params.sortOrder == "" {
-		f, _ := typ.FieldByName("sortOrder")
-		params.sortOrder = f.Tag.Get("default")
+	if params.SortOrder == "" {
+		f, _ := typ.FieldByName("SortOrder")
+		params.SortOrder = f.Tag.Get("default")
 	}
 
-	if params.filter == "" {
-		f, _ := typ.FieldByName("filter")
-		params.filter = getSearchFilter(f.Tag.Get("default"))
+	if params.Filter == "" {
+		f, _ := typ.FieldByName("Filter")
+		params.Filter = getSearchFilter(f.Tag.Get("default"))
 	}
 
-	path := getSearchURL(params, api, orgId)
+	path := api.getSearchURL(params, orgId)
+	var jsonObj map[string]interface{}
+	apis := api.client.GET(path)
 
-	return path
+	if err := json.Unmarshal(apis, &jsonObj); err != nil {
+		fmt.Printf("Error while querying for api with name %s. : %s", params.Name, err)
+		os.Exit(1)
+	}
+
+	return jsonObj
 
 }
 
-func getSearchURL(params SearchParameters, api *API, orgId string) string {
-	replacer := strings.NewReplacer("{limit}", string(params.limit), "{offset}", string(params.offset), "{APIName}", params.name, "{sortOrder}", params.sortOrder)
-	path := api.uri +
-		base_path +
-		strings.Replace(org, "{orgId}", orgId, -1) +
-		replacer.Replace(search)
+func (api *API) getSearchURL(params *SearchParameters, orgId string) string {
+	replacer := strings.NewReplacer("{limit}", string(params.Limit), "{offset}", string(params.Offset), "{APIName}", params.Name, "{sortOrder}", params.SortOrder)
+	path := BASE_PATH +
+		strings.Replace(ORG, "{orgId}", orgId, -1) +
+		replacer.Replace(SEARCH_BY_NAME)
 	return path
 }
 

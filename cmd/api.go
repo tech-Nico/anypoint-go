@@ -17,7 +17,11 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	"github.com/tech-nico/anypoint-cli/rest"
+	"github.com/spf13/viper"
 )
+
+var apiName string
 
 // apiCmd represents the api command
 var apiCmd = &cobra.Command{
@@ -32,6 +36,17 @@ var apiCmd = &cobra.Command{
 	Deploy API proxies`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("api called")
+
+		apiClient := rest.NewApi(viper.GetString(KEY_URI), viper.GetString(KEY_TOKEN))
+		searchParameter := &rest.SearchParameters{
+			apiName,
+			0,
+			0,
+			"",
+			"",
+		}
+
+		apiClient.ByName(viper.GetString(KEY_ORG_ID), searchParameter)
 	},
 }
 
@@ -47,4 +62,7 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// apiCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+
+	apiCmd.Flags().StringVar(&apiName, "api-name", "", "Name of the api")
+
 }

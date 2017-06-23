@@ -8,13 +8,13 @@ import (
 	"crypto/tls"
 )
 
-type Client struct {
+type RestClient struct {
 	URI    string
 	Sling  *sling.Sling
 	client *http.Client
 }
 
-func NewClient(uri string) (*Client) {
+func NewClient(uri string) (*RestClient) {
 	transCfg := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, // ignore expired SSL certificates
 	}
@@ -23,24 +23,34 @@ func NewClient(uri string) (*Client) {
 		Client(client).
 		Base(uri)
 
-	return &Client{
+	return &RestClient{
 		uri,
 		s,
 		client,
 	}
 }
 
-func (client *Client) AddAuthHeader(token string) (*Client) {
+func (client *RestClient) AddAuthHeader(token string) (*RestClient) {
 	client.Sling.Add("Authorization", "Bearer "+token)
 	return client
 }
 
-func (client *Client) AddHeader(key, value string) (*Client) {
+func (client *RestClient) AddOrgHeader(orgId string) (*RestClient) {
+	client.Sling.Add("X-ANYPNT-ORG-ID", orgId)
+	return client
+}
+
+func (client *RestClient) AddEnvHeader(envId string) (*RestClient) {
+	client.Sling.Add("X-ANYPNT-ENV-ID", envId)
+	return client
+}
+
+func (client *RestClient) AddHeader(key, value string) (*RestClient) {
 	client.Sling.Add(key, value)
 	return client
 }
 
-func (client *Client) GET(path string) []byte {
+func (client *RestClient) GET(path string) []byte {
 	req, err := client.
 	Sling.
 		Get(path).Request()
@@ -56,4 +66,18 @@ func (client *Client) GET(path string) []byte {
 		log.Fatal("Error while reading response for %s : %s ", path, err)
 	}
 	return body
+}
+
+func (client *RestClient) POST(body interface{}, responseObj interface{}, path string) (*http.Response, error) {
+
+	response, err := client.
+	Sling.
+		Post(path).
+		BodyJSON(body).
+		ReceiveSuccess(responseObj)
+
+	if err != nil {
+		log.Fatal("Error while executing POST %s : %s", path, err)
+	}
+	return response, err
 }

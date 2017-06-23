@@ -1,19 +1,15 @@
 package rest
 
 import (
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"github.com/dghubble/sling"
 	"log"
-	"net/http"
 	"os"
 	"strings"
 )
 
 type Auth struct {
-	client *http.Client
-	uri    string
+	client *RestClient
 	Token  string
 }
 
@@ -33,28 +29,28 @@ const (
 )
 
 func NewAuthWithToken(uri, token string) *Auth {
-	transCfg := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, // ignore expired SSL certificates
-	}
-	client := &http.Client{Transport: transCfg}
+
+	client := NewClient(uri)
+	client.AddAuthHeader(token)
+
 	return &Auth{
 		client,
-		uri,
 		token,
 	}
 }
 
 func NewAuthWithCredentials(uri, username, password string) *Auth {
+	client := NewClient(uri)
+	token := login(client, uri, username, password)
+	client.AddAuthHeader(token)
 	return &Auth{
 		client,
-		uri,
-		login(client, uri, username, password),
+		token,
 	}
 }
 
 // Login the given user and return the bearer Token
-func login(httpClient *http.Client, uri, pUsername, pPassword string) string {
-
+func login(httpClient *RestClient, uri, pUsername, pPassword string) string {
 	body := LoginPayload{
 		Username: pUsername,
 		Password: pPassword,
@@ -62,13 +58,7 @@ func login(httpClient *http.Client, uri, pUsername, pPassword string) string {
 
 	authToken := new(AuthToken)
 
-	_, err := sling.
-	New().
-		Client(httpClient).
-		Base(uri).
-		Post(LOGIN).
-		BodyJSON(body).
-		ReceiveSuccess(authToken)
+	_, err := httpClient.POST(body, &authToken, LOGIN)
 
 	if err != nil {
 		log.Fatal("Error during login with user '", pUsername, "': ", err)
@@ -80,10 +70,11 @@ func login(httpClient *http.Client, uri, pUsername, pPassword string) string {
 	return authToken.BearerToken
 }
 
+
 func (auth *Auth) Me() []byte {
 	log.Printf("Call to %s", ME)
 
-	return auth.httpGet(ME)
+	return auth.client.GET(ME)
 }
 
 func (auth *Auth) Hierarchy() []byte {
@@ -96,7 +87,7 @@ func (auth *Auth) Hierarchy() []byte {
 	orgId := data["user"].(map[string]interface{})["organization"].(map[string]interface{})["id"].(string)
 	path := strings.Replace(HIERARCHY, "{orgId}", orgId, -1)
 
-	return auth.httpGet(path)
+	return auth.client.GET(path)
 }
 
 
@@ -113,7 +104,8 @@ func (auth *Auth) FindBusinessGroup(path string) string {
 	}
 
 	subOrganizations := data["subOrganizations"].([]interface{})
-	if len(groups) == 0 {
+
+	if len(groups) == 1 {
 		return data["id"].(string)
 	}
 
