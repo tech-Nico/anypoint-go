@@ -32,13 +32,14 @@ func WriteConfig() {
 			home += string(os.PathSeparator)
 		}
 
-		fileName := home + CONFIG_FILE_NAME + ".json"
-		fileContent, err := json.MarshalIndent(viper.AllSettings(), " ", "\t")
-		if err != nil {
-			log.Printf("Error while saving configuration file %s : %s", fileName, err)
-		}
-
-		ioutil.WriteFile(fileName, fileContent, 755)
+		fileName = home + CONFIG_FILE_NAME + ".json"
 	}
+
+	fileContent, err := json.MarshalIndent(viper.AllSettings(), " ", "\t")
+	if err != nil {
+		log.Printf("Error while saving configuration file %s : %s", fileName, err)
+	}
+
+	ioutil.WriteFile(fileName, fileContent, 755)
 
 }

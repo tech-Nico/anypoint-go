@@ -56,15 +56,22 @@ func (client *RestClient) GET(path string) []byte {
 		Get(path).Request()
 
 	res, err := client.client.Do(req)
+
+	if res.StatusCode == 401 {
+		log.Fatal("Auth token expired. Please login again")
+	}
+
 	defer res.Body.Close()
 	if err != nil {
 		log.Fatal("Error while querying for %s: ", path, err)
 	}
+
 	// Check that the server actually sent compressed data
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		log.Fatal("Error while reading response for %s : %s ", path, err)
 	}
+
 	return body
 }
 

@@ -1,11 +1,11 @@
 package rest
 
 import (
-	"strings"
-	"reflect"
 	"encoding/json"
 	"fmt"
 	"os"
+	"reflect"
+	"strings"
 )
 
 const (
@@ -31,11 +31,12 @@ type SearchParameters struct {
 	Name      string
 	Limit     int
 	Offset    int
-	SortOrder string `default:"createdDate"`
+	SortOrder string  `default:"createdDate"`
 	Filter    Filters `default:"all""`
 }
 
-func NewApi(uri, token string) (*API) {
+//NewAPI - Create a new API struct
+func NewAPI(uri, token string) *API {
 	client := NewClient(uri)
 	client.AddAuthHeader(token)
 
@@ -44,9 +45,9 @@ func NewApi(uri, token string) (*API) {
 	}
 }
 
-//Search an API by name
-func (api *API) ByName(orgId string, params *SearchParameters) map[string]interface{} {
-	typ := reflect.TypeOf(&params)
+//ByNameAsJSON - Search an API by name
+func (api *API) ByNameAsJSON(orgID string, params *SearchParameters) map[string]interface{} {
+	typ := reflect.TypeOf(*params)
 
 	if params.SortOrder == "" {
 		f, _ := typ.FieldByName("SortOrder")
@@ -58,7 +59,7 @@ func (api *API) ByName(orgId string, params *SearchParameters) map[string]interf
 		params.Filter = getSearchFilter(f.Tag.Get("default"))
 	}
 
-	path := api.getSearchURL(params, orgId)
+	path := api.getSearchURL(params, orgID)
 	var jsonObj map[string]interface{}
 	apis := api.client.GET(path)
 
@@ -72,10 +73,14 @@ func (api *API) ByName(orgId string, params *SearchParameters) map[string]interf
 }
 
 func (api *API) getSearchURL(params *SearchParameters, orgId string) string {
-	replacer := strings.NewReplacer("{limit}", string(params.Limit), "{offset}", string(params.Offset), "{APIName}", params.Name, "{sortOrder}", params.SortOrder)
+	replacer := strings.NewReplacer("{limit}", fmt.Sprint(params.Limit),
+		"{offset}", fmt.Sprint(params.Offset),
+		"{APIName}", params.Name,
+		"{sortOrder}", params.SortOrder)
 	path := BASE_PATH +
 		strings.Replace(ORG, "{orgId}", orgId, -1) +
 		replacer.Replace(SEARCH_BY_NAME)
+	fmt.Println("\nThe by-name url:", path)
 	return path
 }
 
