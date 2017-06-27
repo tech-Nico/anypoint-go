@@ -18,7 +18,7 @@ import (
 	"os"
 
 	"github.com/fsnotify/fsnotify"
-	homedir "github.com/mitchellh/go-homedir"
+	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"log"
@@ -26,22 +26,30 @@ import (
 
 var cfgFile string
 var outputFormat string
+var debug bool
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
 	Use:   "anypoint-cli",
-	Short: "A brief description of your application",
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
+	Short: "Anypoint Platform command line client",
+	Long: `Manage the Anypoint Platorm through the command line.
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+Anypoint-cli is made of several sub-commands, each allowing you to manage
+a different entity in the Anypoint Platform. Through anypoint-cli you will
+be able to manage:
+- APIs
+- Applications
+- Users
+- Access Management details`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
-	//Run: func(cmd *cobra.Command, args []string) {
-	//	fmt.Printf("Call to root with args %s \n", args)
-	//},
+	Run: func(cmd *cobra.Command, args []string) {
+		if debug {
+			fmt.Println("Debug mode enabled!")
+			viper.Set(KEY_DEBUG, true)
+		}
+		cmd.Usage()
+	},
 }
 
 // Execute adds all child commands to the root command sets flags appropriately.
@@ -59,6 +67,7 @@ func init() {
 	// Global flags
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.anypoint-cli.yaml)")
 	RootCmd.PersistentFlags().StringVar(&outputFormat, "o", "json", "determines output format (json/yaml/csv)")
+	RootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "Display debug information")
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	//RootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")

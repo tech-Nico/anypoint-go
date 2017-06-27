@@ -14,14 +14,19 @@ const (
 	KEY_ORG_ID       string = "orgId"
 	KEY_TOKEN        string = "authToken"
 	KEY_URI          string = "uri"
+	KEY_DEBUG        string = "debug_mode"
 	CONFIG_FILE_NAME string = ".anypoint-cli"
 )
 
 func WriteConfig() {
-	maps := viper.AllSettings()
-	fmt.Printf("All settings %s\n", maps)
+	if viper.Get(KEY_DEBUG) {
+		maps := viper.AllSettings()
+		fmt.Printf("All settings %s\n", maps)
+	}
+
 	fileName := viper.ConfigFileUsed()
-	fmt.Printf("Config fileName used: %s\n", fileName)
+
+	//	fmt.Printf("Config fileName used: %s\n", fileName)
 	if fileName == "" {
 		home, err := homedir.Dir()
 		if err != nil {
@@ -35,9 +40,13 @@ func WriteConfig() {
 		fileName = home + CONFIG_FILE_NAME + ".json"
 	}
 
-	fileContent, err := json.MarshalIndent(viper.AllSettings(), " ", "\t")
+	settings := viper.AllSettings()
+	//DO NOT PERSIST THE DEBUG SETTING
+	delete(settings, KEY_DEBUG)
+
+	fileContent, err := json.MarshalIndent(settings, " ", "\t")
 	if err != nil {
-		log.Printf("Error while saving configuration file %s : %s", fileName, err)
+		log.Fatalf("Error while saving configuration file %s : %s", fileName, err)
 	}
 
 	ioutil.WriteFile(fileName, fileContent, 755)

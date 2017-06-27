@@ -30,3 +30,5 @@ func PrintTabular(headers []string, data [][]string) {
 	}
 
 }
+
+//func debug (doSomething (func () ())

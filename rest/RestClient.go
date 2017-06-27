@@ -61,6 +61,10 @@ func (client *RestClient) GET(path string) []byte {
 		log.Fatal("Auth token expired. Please login again")
 	}
 
+	if res.StatusCode >= 400 {
+		log.Fatalf("\nError performing HTTP GET %s - %s\n", path, res.Status)
+	}
+
 	defer res.Body.Close()
 	if err != nil {
 		log.Fatal("Error while querying for %s: ", path, err)
@@ -75,6 +79,7 @@ func (client *RestClient) GET(path string) []byte {
 	return body
 }
 
+//POST - Perform an HTTP POST
 func (client *RestClient) POST(body interface{}, responseObj interface{}, path string) (*http.Response, error) {
 
 	response, err := client.
@@ -83,8 +88,13 @@ func (client *RestClient) POST(body interface{}, responseObj interface{}, path s
 		BodyJSON(body).
 		ReceiveSuccess(responseObj)
 
+	if response.StatusCode >= 400 {
+		log.Fatalf("\nError while performing HTTP POST %s - %s\n Headers; %s", path, response.Status, response.Request.Header)
+	}
+
+
 	if err != nil {
-		log.Fatal("Error while executing POST %s : %s", path, err)
+		log.Fatalf("\nError while executing POST %s : %s\n", path, err)
 	}
 	return response, err
 }

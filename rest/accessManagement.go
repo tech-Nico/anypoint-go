@@ -82,6 +82,7 @@ func (auth *Auth) Hierarchy() []byte {
 	var data map[string]interface{}
 	if err := json.Unmarshal(me, &data); err != nil {
 		fmt.Printf("Error while marshalling JSON response to 'Me' endpoint: %v", err)
+		fmt.Printf("\nData was %s ", me)
 		os.Exit(1)
 	}
 	orgId := data["user"].(map[string]interface{})["organization"].(map[string]interface{})["id"].(string)
