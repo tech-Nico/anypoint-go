@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"crypto/tls"
+	"github.com/tech-nico/anypoint-cli/utils"
 )
 
 type RestClient struct {
@@ -82,11 +83,24 @@ func (client *RestClient) GET(path string) []byte {
 //POST - Perform an HTTP POST
 func (client *RestClient) POST(body interface{}, responseObj interface{}, path string) (*http.Response, error) {
 
+	utils.Debug(func() {
+		log.Println("REQEST")
+		log.Printf("POST %s", path)
+	})
+
 	response, err := client.
 	Sling.
 		Post(path).
 		BodyJSON(body).
 		ReceiveSuccess(responseObj)
+
+	utils.Debug(func() {
+
+		log.Printf("Request Headers: %s", response.Request.Header)
+		log.Printf("RESPONSE")
+		log.Printf("POST %s : %s", path, response.Status)
+		log.Printf("Response Headers: %s", response.Header)
+	})
 
 	if response.StatusCode >= 400 {
 		log.Fatalf("\nError while performing HTTP POST %s - %s\n Headers; %s", path, response.Status, response.Request.Header)

@@ -23,6 +23,7 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 	"strings"
 	"syscall"
+	"github.com/tech-nico/anypoint-cli/utils"
 )
 
 var username string
@@ -38,6 +39,11 @@ var loginCmd = &cobra.Command{
 	Bear in mind that if the Anypoint Platform you are trying to login onto is configured
 	with an External Identity Provider, you will need to provide credentials for such IDP.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if debug {
+			fmt.Println("Debug mode enabled!")
+			viper.Set(utils.KEY_DEBUG, true)
+		}
+
 		if uri == "" {
 			return errors.New("Please specify --uri")
 		}
@@ -52,14 +58,14 @@ var loginCmd = &cobra.Command{
 
 		auth := rest.NewAuthWithCredentials(uri, username, password)
 		fmt.Printf("Login successful. Got token '%s'", auth.Token)
-		viper.Set(KEY_TOKEN, auth.Token)
-		viper.Set(KEY_URI, uri)
+		viper.Set(utils.KEY_TOKEN, auth.Token)
+		viper.Set(utils.KEY_URI, uri)
 		if orgPath != "" {
 			orgId := auth.FindBusinessGroup(orgPath)
 			fmt.Printf("The orgId is '%s'\n", orgId)
-			viper.Set(KEY_ORG_ID, orgId)
+			viper.Set(utils.KEY_ORG_ID, orgId)
 		}
-		WriteConfig()
+		utils.WriteConfig()
 		//All good
 		return nil
 	},

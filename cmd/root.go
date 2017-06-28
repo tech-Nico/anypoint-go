@@ -22,6 +22,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"log"
+	"github.com/tech-nico/anypoint-cli/utils"
 )
 
 var cfgFile string
@@ -44,10 +45,6 @@ be able to manage:
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	Run: func(cmd *cobra.Command, args []string) {
-		if debug {
-			fmt.Println("Debug mode enabled!")
-			viper.Set(KEY_DEBUG, true)
-		}
 		cmd.Usage()
 	},
 }
@@ -96,7 +93,7 @@ func setupViper() {
 
 		// Search config in home directory with name ".anypoint-cli" (without extension).
 		viper.AddConfigPath(home)
-		viper.SetConfigName(CONFIG_FILE_NAME)
+		viper.SetConfigName(utils.CONFIG_FILE_NAME)
 	}
 
 	viper.AutomaticEnv()

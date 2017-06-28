@@ -1,9 +1,10 @@
-package cmd
+package utils
 
 import (
 	"fmt"
 	"os"
 	"text/tabwriter"
+	"github.com/spf13/viper"
 )
 
 func tabularize(elems []string) string {
@@ -31,4 +32,10 @@ func PrintTabular(headers []string, data [][]string) {
 
 }
 
-//func debug (doSomething (func () ())
+type DebugFunc func()
+
+func Debug(doSomething DebugFunc) {
+	if viper.GetBool(KEY_DEBUG) {
+		doSomething()
+	}
+}

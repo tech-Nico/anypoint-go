@@ -15,6 +15,9 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
+	"fmt"
+	"github.com/spf13/viper"
+	"github.com/tech-nico/anypoint-cli/utils"
 )
 
 // apiCmd represents the api command
@@ -29,6 +32,11 @@ var apiCmd = &cobra.Command{
 	Configure APIs
 	Deploy API proxies`,
 	Run: func(cmd *cobra.Command, args []string) {
+		if debug {
+			fmt.Println("Debug mode enabled!")
+			viper.Set(utils.KEY_DEBUG, true)
+		}
+
 		cmd.Usage()
 	},
 }

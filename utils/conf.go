@@ -1,4 +1,4 @@
-package cmd
+package utils
 
 import (
 	"encoding/json"
@@ -19,7 +19,7 @@ const (
 )
 
 func WriteConfig() {
-	if viper.Get(KEY_DEBUG) {
+	if viper.GetBool(KEY_DEBUG) {
 		maps := viper.AllSettings()
 		fmt.Printf("All settings %s\n", maps)
 	}
