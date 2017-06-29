@@ -52,6 +52,12 @@ func (client *RestClient) AddHeader(key, value string) (*RestClient) {
 }
 
 func (client *RestClient) GET(path string) []byte {
+
+	utils.Debug(func() {
+		log.Println("REQEST")
+		log.Printf("POST %s", path)
+	})
+
 	req, err := client.
 	Sling.
 		Get(path).Request()
@@ -77,6 +83,8 @@ func (client *RestClient) GET(path string) []byte {
 		log.Fatal("Error while reading response for %s : %s ", path, err)
 	}
 
+	utils.Debug(logResponse("GET", path, res))
+
 	return body
 }
 
@@ -94,13 +102,7 @@ func (client *RestClient) POST(body interface{}, responseObj interface{}, path s
 		BodyJSON(body).
 		ReceiveSuccess(responseObj)
 
-	utils.Debug(func() {
-
-		log.Printf("Request Headers: %s", response.Request.Header)
-		log.Printf("RESPONSE")
-		log.Printf("POST %s : %s", path, response.Status)
-		log.Printf("Response Headers: %s", response.Header)
-	})
+	utils.Debug(logResponse("POST", path, response))
 
 	if response.StatusCode >= 400 {
 		log.Fatalf("\nError while performing HTTP POST %s - %s\n Headers; %s", path, response.Status, response.Request.Header)
@@ -111,4 +113,14 @@ func (client *RestClient) POST(body interface{}, responseObj interface{}, path s
 		log.Fatalf("\nError while executing POST %s : %s\n", path, err)
 	}
 	return response, err
+}
+
+func logResponse(method, path string, response *http.Response) utils.DebugFunc {
+	return func() {
+		log.Printf("Request Headers: %s", response.Request.Header)
+		log.Printf("RESPONSE")
+		log.Printf("%s %s : %s", method, path, response.Status)
+		log.Printf("Response Headers: %s", response.Header)
+	}
+
 }
