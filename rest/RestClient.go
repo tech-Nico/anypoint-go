@@ -57,32 +57,18 @@ func (client *RestClient) GET(path string) []byte {
 		log.Println("REQEST")
 		log.Printf("POST %s", path)
 	})
-
-	req, err := client.
-	Sling.
-		Get(path).Request()
-
-	res, err := client.client.Do(req)
-
-	if res.StatusCode == 401 {
-		log.Fatal("Auth token expired. Please login again")
-	}
-
-	if res.StatusCode >= 400 {
-		log.Fatalf("\nError performing HTTP GET %s - %s\n", path, res.Status)
-	}
-
-	defer res.Body.Close()
+	req, err := client.Sling.Get(path).Request()
 	if err != nil {
-		log.Fatal("Error while querying for %s: ", path, err)
+		log.Fatalf("Error building GET request for path %s : %s", path, err)
 	}
+	res, err := client.client.Do(req)
+	defer res.Body.Close()
 
-	// Check that the server actually sent compressed data
+	validateResponse(res, err, "GET", path)
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		log.Fatal("Error while reading response for %s : %s ", path, err)
 	}
-
 	utils.Debug(logResponse("GET", path, res))
 
 	return body
@@ -104,15 +90,25 @@ func (client *RestClient) POST(body interface{}, responseObj interface{}, path s
 
 	utils.Debug(logResponse("POST", path, response))
 
+	validateResponse(response, err, "POST", path)
+
+	return response, err
+}
+
+func validateResponse(response *http.Response, err error, method, path string) {
+
+	if err != nil {
+		log.Fatalf("Error while executing http POST %s : %s", path, err)
+	}
+
+	if response.StatusCode == 401 {
+		log.Fatal("Auth token expired. Please login again")
+	}
+
 	if response.StatusCode >= 400 {
 		log.Fatalf("\nError while performing HTTP POST %s - %s\n Headers; %s", path, response.Status, response.Request.Header)
 	}
 
-
-	if err != nil {
-		log.Fatalf("\nError while executing POST %s : %s\n", path, err)
-	}
-	return response, err
 }
 
 func logResponse(method, path string, response *http.Response) utils.DebugFunc {
