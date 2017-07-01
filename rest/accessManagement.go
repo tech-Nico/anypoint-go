@@ -30,7 +30,7 @@ const (
 
 func NewAuthWithToken(uri, token string) *Auth {
 
-	client := NewClient(uri)
+	client := NewRestClient(uri)
 	client.AddAuthHeader(token)
 
 	return &Auth{
@@ -40,8 +40,8 @@ func NewAuthWithToken(uri, token string) *Auth {
 }
 
 func NewAuthWithCredentials(uri, username, password string) *Auth {
-	client := NewClient(uri)
-	token := login(client, uri, username, password)
+	client := NewRestClient(uri)
+	token := Login(client, uri, username, password)
 	client.AddAuthHeader(token)
 	return &Auth{
 		client,
@@ -50,7 +50,7 @@ func NewAuthWithCredentials(uri, username, password string) *Auth {
 }
 
 // Login the given user and return the bearer Token
-func login(httpClient *RestClient, uri, pUsername, pPassword string) string {
+func Login(httpClient *RestClient, uri, pUsername, pPassword string) string {
 	body := LoginPayload{
 		Username: pUsername,
 		Password: pPassword,

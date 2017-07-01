@@ -15,7 +15,7 @@ type RestClient struct {
 	client *http.Client
 }
 
-func NewClient(uri string) (*RestClient) {
+func NewRestClient(uri string) (*RestClient) {
 	transCfg := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, // ignore expired SSL certificates
 	}

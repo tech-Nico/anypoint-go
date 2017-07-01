@@ -21,10 +21,10 @@ type API struct {
 type Filters string
 
 const (
-	FAVORITES     Filters = "pinned"
-	ACTIVE        Filters = "active"
-	PUBLIC_PORTAL Filters = "public"
-	ALL           Filters = "all"
+	API_FILTER_FAVORITES     Filters = "pinned"
+	API_FILTER_ACTIVE        Filters = "active"
+	API_FILTER_PUBLIC_PORTAL Filters = "public"
+	API_FILTER_ALL           Filters = "all"
 )
 
 type SearchParameters struct {
@@ -35,9 +35,20 @@ type SearchParameters struct {
 	Filter    Filters `default:"all""`
 }
 
+func NewAPIWithCredentials(uri, username, password string) *API {
+
+	client := NewRestClient(uri)
+	token := Login(client, uri, username, password)
+	client.AddAuthHeader(token)
+
+	return &API{
+		client,
+	}
+}
+
 //NewAPI - Create a new API struct
 func NewAPI(uri, token string) *API {
-	client := NewClient(uri)
+	client := NewRestClient(uri)
 	client.AddAuthHeader(token)
 
 	return &API{
@@ -86,14 +97,14 @@ func (api *API) getSearchURL(params *SearchParameters, orgId string) string {
 
 func getSearchFilter(filter string) Filters {
 	switch filter {
-	case string(ALL):
-		return ALL
-	case string(FAVORITES):
-		return FAVORITES
-	case string(ACTIVE):
-		return ACTIVE
-	case string(PUBLIC_PORTAL):
-		return PUBLIC_PORTAL
+	case string(API_FILTER_ALL):
+		return API_FILTER_ALL
+	case string(API_FILTER_FAVORITES):
+		return API_FILTER_FAVORITES
+	case string(API_FILTER_ACTIVE):
+		return API_FILTER_ACTIVE
+	case string(API_FILTER_PUBLIC_PORTAL):
+		return API_FILTER_PUBLIC_PORTAL
 	default:
 		panic("Invalid filter specified: " + filter)
 

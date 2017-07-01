@@ -1,15 +1,17 @@
-package rest
+package test
 
 import (
 	"testing"
 	"os"
 	"encoding/json"
+	"github.com/tech-nico/anypoint-cli/rest"
 )
 
 const (
 	env_uri      = "TEST_AP_URI"
 	env_username = "TEST_AP_USERNAME"
 	env_password = "TEST_AP_PASSWORD"
+	env_org_id   = "TEST_AP_ORGID"
 )
 
 func prepTest(t *testing.T) (string, string, string) {
@@ -31,8 +33,8 @@ func prepTest(t *testing.T) (string, string, string) {
 func TestLogin(t *testing.T) {
 	username, password, uri := prepTest(t)
 
-	client := NewClient(uri)
-	token := login(client, uri, username, password)
+	client := rest.NewRestClient(uri)
+	token := rest.Login(client, uri, username, password)
 
 	if token == "" {
 		t.Errorf("Login returned a nil token")
@@ -44,7 +46,7 @@ func TestLogin(t *testing.T) {
 
 func TestMe(t *testing.T) {
 	username, password, uri := prepTest(t)
-	client := NewAuthWithCredentials(uri, username, password)
+	client := rest.NewAuthWithCredentials(uri, username, password)
 	meData := client.Me()
 	var meJson map[string]interface{}
 	err := json.Unmarshal(meData, &meJson)
@@ -65,9 +67,9 @@ func TestMe(t *testing.T) {
 
 }
 
-func TestHierarchi(t *testing.T) {
+func TestAuth_Hierarchy(t *testing.T) {
 	username, password, uri := prepTest(t)
-	client := NewAuthWithCredentials(uri, username, password)
+	client := rest.NewAuthWithCredentials(uri, username, password)
 	meData := client.Hierarchy()
 	var vJson map[string]interface{}
 	err := json.Unmarshal(meData, &vJson)
