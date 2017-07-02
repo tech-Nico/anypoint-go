@@ -83,6 +83,13 @@ func (api *API) ByNameAsJSON(orgID string, params *SearchParameters) map[string]
 
 }
 
+//ByNameAsJSON - Search an API by name
+func (api *API) SearchAPI(orgID string, params *SearchParameters) map[string]interface{} {
+
+	return make(map[string]interface{})
+
+}
+
 func (api *API) getSearchURL(params *SearchParameters, orgId string) string {
 	replacer := strings.NewReplacer("{limit}", fmt.Sprint(params.Limit),
 		"{offset}", fmt.Sprint(params.Offset),
