@@ -15,14 +15,15 @@ const (
 	KEY_TOKEN        string = "authToken"
 	KEY_URI          string = "uri"
 	KEY_DEBUG        string = "debug_mode"
+	KEY_FORMAT       string = "format"
 	CONFIG_FILE_NAME string = ".anypoint-cli"
 )
 
 func WriteConfig() {
-	if viper.GetBool(KEY_DEBUG) {
+	Debug(func() {
 		maps := viper.AllSettings()
 		fmt.Printf("All settings %s\n", maps)
-	}
+	})
 
 	fileName := viper.ConfigFileUsed()
 

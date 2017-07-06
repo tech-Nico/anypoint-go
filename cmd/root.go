@@ -21,7 +21,6 @@ import (
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"log"
 	"github.com/tech-nico/anypoint-cli/utils"
 )
 
@@ -42,10 +41,11 @@ be able to manage:
 - Applications
 - Users
 - Access Management details`,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
 	Run: func(cmd *cobra.Command, args []string) {
 		cmd.Usage()
+	},
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		validateFormat()
 	},
 }
 
@@ -63,18 +63,37 @@ func init() {
 
 	// Global flags
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.anypoint-cli.yaml)")
-	RootCmd.PersistentFlags().StringVar(&outputFormat, "o", "json", "determines output format (json/yaml/csv)")
+	RootCmd.PersistentFlags().StringVar(&outputFormat, "o", "list", "determines output format (json/yaml/csv)")
 	RootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "Display debug information")
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	//RootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 	viper.BindPFlag(utils.KEY_DEBUG, RootCmd.PersistentFlags().Lookup("debug"))
+	viper.BindPFlag(utils.KEY_FORMAT, RootCmd.PersistentFlags().Lookup("o"))
 }
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
 	setupViper()
 }
+
+func validateFormat() {
+
+	format := viper.GetString(utils.KEY_FORMAT)
+	utils.Debug(func() {
+		fmt.Printf("\nTHE FORMAT IS %s\n", format)
+	})
+
+	switch format {
+	case "json":
+		break
+	case "list":
+		break
+	default:
+		fmt.Errorf("Invalid format specified '%s'", format)
+	}
+}
+
 func setupViper() {
 	viper.SetConfigType("json")
 
@@ -101,11 +120,15 @@ func setupViper() {
 	// read in environment variables that match
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
-		fmt.Println("Using config file:", viper.ConfigFileUsed())
+		utils.Debug(func() {
+			fmt.Println("Using config file:", viper.ConfigFileUsed())
+		})
 	}
 	//else {
 	//		panic(err)
 	//	}
 
-	log.Printf("File used : %s", viper.ConfigFileUsed())
+	utils.Debug(func() {
+		fmt.Printf("File used : %s", viper.ConfigFileUsed())
+	})
 }

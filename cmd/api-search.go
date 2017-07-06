@@ -21,6 +21,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/tech-nico/anypoint-cli/rest"
 	"github.com/tech-nico/anypoint-cli/utils"
+	"encoding/json"
 )
 
 var apiName string
@@ -43,16 +44,29 @@ var apiSearchCmd = &cobra.Command{
 			Filter:    "",
 		}
 
-		res := apiClient.SearchAPIAsJSON(viper.GetString(utils.KEY_ORG_ID), searchParameter)
-		total := res["total"]
-		if total == 0 {
-			fmt.Println("No APIs match name " + apiName)
-			os.Exit(0)
-		}
+		format := viper.GetString(utils.KEY_FORMAT)
+		switch format {
+		case "list":
+			res := apiClient.SearchAPIAsJSON(viper.GetString(utils.KEY_ORG_ID), searchParameter)
 
-		apis := res["apis"]
-		fmt.Printf("The JSON apis: %s", apis)
-		printAPIs(apis.([]interface{}))
+			total := res["total"]
+			if total == 0 {
+				fmt.Println("No APIs match name " + apiName)
+				os.Exit(0)
+			}
+
+			apis := res["apis"]
+			printAPIs(apis.([]interface{}))
+			break
+		case "json":
+			res := apiClient.SearchAPIAsJSON(viper.GetString(utils.KEY_ORG_ID), searchParameter)
+			b, err := json.MarshalIndent(res, "", "  ")
+			if err != nil {
+				fmt.Println("error:", err)
+			}
+			os.Stdout.Write(b)
+			break
+		}
 
 	},
 }

@@ -6,6 +6,7 @@ import (
 	"os"
 	"reflect"
 	"strings"
+	"github.com/tech-nico/anypoint-cli/utils"
 )
 
 const (
@@ -96,7 +97,10 @@ func (api *API) getSearchURL(params *SearchParameters, orgId string) string {
 	path := BASE_PATH +
 		strings.Replace(ORG, "{orgId}", orgId, -1) +
 		replacer.Replace(SEARCH_API)
-	fmt.Println("\nThe by-name url:", path)
+	utils.Debug(func() {
+		fmt.Println("\nThe search API url:", path)
+	})
+
 	return path
 }
 
