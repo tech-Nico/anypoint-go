@@ -9,9 +9,9 @@ import (
 )
 
 const (
-	BASE_PATH      = "/apiplatform/repository/v2"
-	ORG            = "/organizations/{orgId}"
-	SEARCH_BY_NAME = "/apis?ascending=false&limit={limit}&offset={offset}&query={APIName}&sort={sortOrder}"
+	BASE_PATH  = "/apiplatform/repository/v2"
+	ORG        = "/organizations/{orgId}"
+	SEARCH_API = "/apis?ascending=false&limit={limit}&offset={offset}&query={APIName}&sort={sortOrder}"
 )
 
 type API struct {
@@ -56,8 +56,7 @@ func NewAPI(uri, token string) *API {
 	}
 }
 
-//ByNameAsJSON - Search an API by name
-func (api *API) ByNameAsJSON(orgID string, params *SearchParameters) map[string]interface{} {
+func (api *API) SearchAPIAsString(orgID string, params *SearchParameters) string {
 	typ := reflect.TypeOf(*params)
 
 	if params.SortOrder == "" {
@@ -71,8 +70,14 @@ func (api *API) ByNameAsJSON(orgID string, params *SearchParameters) map[string]
 	}
 
 	path := api.getSearchURL(params, orgID)
-	var jsonObj map[string]interface{}
 	apis := api.client.GET(path)
+	return string(apis)
+}
+
+//SearchAPIAsJSON - Search an API by name
+func (api *API) SearchAPIAsJSON(orgID string, params *SearchParameters) map[string]interface{} {
+	apis := []byte(api.SearchAPIAsString(orgID, params))
+	var jsonObj map[string]interface{}
 
 	if err := json.Unmarshal(apis, &jsonObj); err != nil {
 		fmt.Printf("Error while querying for api with name %s. : %s", params.Name, err)
@@ -83,13 +88,6 @@ func (api *API) ByNameAsJSON(orgID string, params *SearchParameters) map[string]
 
 }
 
-//ByNameAsJSON - Search an API by name
-func (api *API) SearchAPI(orgID string, params *SearchParameters) map[string]interface{} {
-
-	return make(map[string]interface{})
-
-}
-
 func (api *API) getSearchURL(params *SearchParameters, orgId string) string {
 	replacer := strings.NewReplacer("{limit}", fmt.Sprint(params.Limit),
 		"{offset}", fmt.Sprint(params.Offset),
@@ -97,7 +95,7 @@ func (api *API) getSearchURL(params *SearchParameters, orgId string) string {
 		"{sortOrder}", params.SortOrder)
 	path := BASE_PATH +
 		strings.Replace(ORG, "{orgId}", orgId, -1) +
-		replacer.Replace(SEARCH_BY_NAME)
+		replacer.Replace(SEARCH_API)
 	fmt.Println("\nThe by-name url:", path)
 	return path
 }

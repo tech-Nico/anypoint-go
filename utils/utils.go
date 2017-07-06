@@ -32,9 +32,7 @@ func PrintTabular(headers []string, data [][]string) {
 
 }
 
-type DebugFunc func()
-
-func Debug(doSomething DebugFunc) {
+func Debug(doSomething func()) {
 	if viper.GetBool(KEY_DEBUG) {
 		doSomething()
 	}

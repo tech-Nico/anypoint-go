@@ -111,7 +111,7 @@ func validateResponse(response *http.Response, err error, method, path string) {
 
 }
 
-func logResponse(method, path string, response *http.Response) utils.DebugFunc {
+func logResponse(method, path string, response *http.Response) (func()) {
 	return func() {
 		log.Printf("Request Headers: %s", response.Request.Header)
 		log.Printf("RESPONSE")

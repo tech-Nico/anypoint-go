@@ -3,19 +3,18 @@ package test
 import (
 	"testing"
 	"github.com/tech-nico/anypoint-cli/rest"
-	"os"
 )
 
-func Test_ByNameAsJSON(t *testing.T) {
+func Test_ByNameAsString(t *testing.T) {
 
-	username, password, uri := prepTest(t)
-	orgId := os.Getenv(env_org_id)
-	if orgId == "" {
-		t.Fatalf("Env variable %s not defined", env_org_id)
-	}
+}
+
+func Test_SearchAPIAsJSON(t *testing.T) {
+
+	username, password, uri, orgId := prepTest(t)
 
 	searchParams := &rest.SearchParameters{
-		Name:      "Flights",
+		Name:      "Test",
 		Limit:     10,
 		Offset:    0,
 		SortOrder: "",
@@ -24,7 +23,7 @@ func Test_ByNameAsJSON(t *testing.T) {
 
 	api := rest.NewAPIWithCredentials(uri, username, password)
 
-	searchRes := api.ByNameAsJSON(orgId, searchParams)
+	searchRes := api.SearchAPIAsJSON(orgId, searchParams)
 	t.Logf("Search results : %s", searchRes)
 	if searchRes == nil {
 		t.Errorf("Unable to find api using criteria %s", searchParams)
@@ -35,3 +34,4 @@ func Test_ByNameAsJSON(t *testing.T) {
 	}
 
 }
+

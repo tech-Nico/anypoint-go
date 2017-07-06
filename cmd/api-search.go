@@ -33,10 +33,6 @@ var apiSearchCmd = &cobra.Command{
   api search --name "My API" --limit 10 --filter Portal
   `,
 	Run: func(cmd *cobra.Command, args []string) {
-		if debug {
-			fmt.Println("Debug mode enabled!")
-			viper.Set(utils.KEY_DEBUG, true)
-		}
 
 		apiClient := rest.NewAPI(viper.GetString(utils.KEY_URI), viper.GetString(utils.KEY_TOKEN))
 		searchParameter := &rest.SearchParameters{
@@ -47,7 +43,7 @@ var apiSearchCmd = &cobra.Command{
 			Filter:    "",
 		}
 
-		res := apiClient.ByNameAsJSON(viper.GetString(utils.KEY_ORG_ID), searchParameter)
+		res := apiClient.SearchAPIAsJSON(viper.GetString(utils.KEY_ORG_ID), searchParameter)
 		total := res["total"]
 		if total == 0 {
 			fmt.Println("No APIs match name " + apiName)
