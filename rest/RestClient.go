@@ -79,7 +79,7 @@ func (client *RestClient) POST(body interface{}, responseObj interface{}, path s
 
 	utils.Debug(func() {
 		log.Println("REQEST")
-		log.Printf("POST %s", path)
+		log.Printf("POST %s%s", client.URI, path)
 	})
 
 	response, err := client.

@@ -19,7 +19,7 @@ func tabularize(elems []string) string {
 
 func PrintTabular(headers []string, data [][]string) {
 
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', tabwriter.AlignRight|tabwriter.Debug)
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', tabwriter.FilterHTML)
 	defer w.Flush()
 	fmt.Println("")
 	headersStr := tabularize(headers)

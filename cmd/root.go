@@ -16,7 +16,6 @@ package cmd
 import (
 	"fmt"
 	"os"
-
 	"github.com/fsnotify/fsnotify"
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"

@@ -16,7 +16,6 @@ package cmd
 import (
 	"fmt"
 	"os"
-
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/tech-nico/anypoint-cli/rest"
@@ -25,6 +24,7 @@ import (
 )
 
 var apiName string
+var offset, limit int
 
 // appCmd represents the app command
 var apiSearchCmd = &cobra.Command{
@@ -35,13 +35,19 @@ var apiSearchCmd = &cobra.Command{
   `,
 	Run: func(cmd *cobra.Command, args []string) {
 
+		if apiName == "" {
+			cmd.Usage()
+			fmt.Println("Error: Please use option --name to specify a search criteria")
+			os.Exit(1)
+		}
+
 		apiClient := rest.NewAPI(viper.GetString(utils.KEY_URI), viper.GetString(utils.KEY_TOKEN))
 		searchParameter := &rest.SearchParameters{
 			Name:      apiName,
-			Offset:    0,
-			Limit:     1,
-			SortOrder: "",
-			Filter:    "",
+			Offset:    offset,
+			Limit:     limit,
+			SortOrder: "", //TODO
+			Filter:    "", //TODO
 		}
 
 		format := viper.GetString(utils.KEY_FORMAT)
@@ -49,14 +55,11 @@ var apiSearchCmd = &cobra.Command{
 		case "list":
 			res := apiClient.SearchAPIAsJSON(viper.GetString(utils.KEY_ORG_ID), searchParameter)
 
-			total := res["total"]
-			if total == 0 {
-				fmt.Println("No APIs match name " + apiName)
-				os.Exit(0)
+			total := res["total"].(float64)
+			if total > 0 {
+				apis := res["apis"]
+				printAPIs(apis.([]interface{}))
 			}
-
-			apis := res["apis"]
-			printAPIs(apis.([]interface{}))
 			break
 		case "json":
 			res := apiClient.SearchAPIAsJSON(viper.GetString(utils.KEY_ORG_ID), searchParameter)
@@ -72,7 +75,7 @@ var apiSearchCmd = &cobra.Command{
 }
 
 func printAPIs(apis []interface{}) {
-	headers := []string{"API Name", "Version Name", "API ID", "Version ID"}
+	headers := []string{"API Name", "Version Name", "API ID", "Version ID", "Portal"}
 
 	data := make([][]string, 0)
 	for _, api := range apis {
@@ -83,7 +86,8 @@ func printAPIs(apis []interface{}) {
 			row := []string{currAPI["name"].(string),
 							currVersion["name"].(string),
 							fmt.Sprint(currAPI["id"]),
-							fmt.Sprint(currVersion["id"])}
+							fmt.Sprint(currVersion["id"]),
+							fmt.Sprint(currVersion["portalId"] != nil && currVersion["portalId"].(float64) != 0)}
 			data = append(data, row)
 		}
 	}
@@ -94,14 +98,7 @@ func printAPIs(apis []interface{}) {
 func init() {
 	apiCmd.AddCommand(apiSearchCmd)
 
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// appCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// appCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-	apiSearchCmd.Flags().StringVar(&apiName, "api-name", "", "Name of the api")
+	apiSearchCmd.Flags().StringVar(&apiName, "name", "", "Name of the api")
+	apiSearchCmd.Flags().IntVar(&offset, "offset", 0, "Return results starting from the specified offset")
+	apiSearchCmd.Flags().IntVar(&limit, "limit", 25, "Number of results to return. Default to 25")
 }
