@@ -10,9 +10,12 @@ import (
 )
 
 const (
-	BASE_PATH  = "/apiplatform/repository/v2"
-	ORG        = "/organizations/{orgId}"
-	SEARCH_API = "/apis?ascending=false&limit={limit}&offset={offset}&query={APIName}&sort={sortOrder}"
+	BASE_PATH         = "/apiplatform/repository/v2"
+	ORG_PATH          = "/organizations/{orgId}"
+	SEARCH_API_PATH   = "/apis?ascending=false&limit={limit}&offset={offset}&query={APIName}&sort={sortOrder}"
+	API_PATH          = ORG_PATH + "/api/{apiId}"
+	VERSION_PATH      = API_PATH + "/version/{versionId}"
+	API_ENDPONIT_PATH = VERSION_PATH + "/endpoint"
 )
 
 type API struct {
@@ -89,14 +92,38 @@ func (api *API) SearchAPIAsJSON(orgID string, params *SearchParameters) map[stri
 
 }
 
+func (api *API) GetEndpointAsJSONString(orgId string, apiId, versionId int) string {
+	var path string
+	path = strings.Replace(API_ENDPONIT_PATH, "{orgId}", orgId, -1)
+	path = strings.Replace(API_ENDPONIT_PATH, "{apiId}", fmt.Sprint(apiId), -1)
+	path = strings.Replace(API_ENDPONIT_PATH, "{versionId}", fmt.Sprint(versionId), -1)
+
+	endpointStr := api.client.GET(path)
+
+	return string(endpointStr)
+}
+
+func (api *API) GetEndpointAsMap(orgId string, apiId, versionId int) map[string]interface{} {
+	endpoint := []byte(api.GetEndpointAsJSONString(orgId, apiId, versionId))
+	var jsonObj map[string]interface{}
+
+	if err := json.Unmarshal(endpoint, &jsonObj); err != nil {
+		fmt.Printf("Error while retrieving endpoint: %s", err)
+		os.Exit(1)
+	}
+
+	return jsonObj
+
+}
+
 func (api *API) getSearchURL(params *SearchParameters, orgId string) string {
 	replacer := strings.NewReplacer("{limit}", fmt.Sprint(params.Limit),
 		"{offset}", fmt.Sprint(params.Offset),
 		"{APIName}", params.Name,
 		"{sortOrder}", params.SortOrder)
 	path := BASE_PATH +
-		strings.Replace(ORG, "{orgId}", orgId, -1) +
-		replacer.Replace(SEARCH_API)
+		strings.Replace(ORG_PATH, "{orgId}", orgId, -1) +
+		replacer.Replace(SEARCH_API_PATH)
 	utils.Debug(func() {
 		fmt.Println("\nThe search API url:", path)
 	})
