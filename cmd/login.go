@@ -45,7 +45,7 @@ var loginCmd = &cobra.Command{
 		}
 
 		if uri == "" {
-			return errors.New("Please specify --uri")
+			uri = "https://anypoint.mulesoft.com"
 		}
 
 		if username == "" {

@@ -18,6 +18,10 @@ import (
 
 	"github.com/spf13/cobra"
 	"os"
+	"github.com/tech-nico/anypoint-cli/rest"
+	"github.com/spf13/viper"
+	"github.com/tech-nico/anypoint-cli/utils"
+	"encoding/json"
 )
 
 var apiId, versionId int
@@ -41,8 +45,43 @@ var endpointCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		fmt.Println("endpoint called")
+		apiClient := rest.NewAPI(viper.GetString(utils.KEY_URI), viper.GetString(utils.KEY_TOKEN))
+
+		format := viper.GetString(utils.KEY_FORMAT)
+		switch format {
+		case "list":
+			res := apiClient.GetEndpointAsMap(viper.GetString(utils.KEY_ORG_ID), apiId, versionId)
+			printEndpoint(res)
+			break
+		case "json":
+			res := apiClient.GetEndpointAsJSONString(viper.GetString(utils.KEY_ORG_ID), apiId, versionId)
+			b, err := json.MarshalIndent(res, "", "  ")
+			if err != nil {
+				fmt.Println("error:", err)
+			}
+			os.Stdout.Write(b)
+			break
+		}
+
 	},
+}
+
+func printEndpoint(endpoint map[string]interface{}) {
+	headers := []string{"TYPE", "URI", "PROXY URI", "PROXY REGISTRATION URI", "USE DOMAIN", "RESPONSE TIMEOUT"}
+
+	data := make([][]string, 1)
+	data[0] = []string{
+		fmt.Sprint(endpoint["type"]),
+		fmt.Sprint(endpoint["uri"]),
+		fmt.Sprint(endpoint["proxyUri"]),
+		fmt.Sprint(endpoint["proxyRegistrationUri"]),
+		fmt.Sprint(endpoint["referencesUserDomain"]),
+		fmt.Sprint(endpoint["resonseTimeout"]),
+
+	}
+
+	utils.PrintTabular(headers, data)
+
 }
 
 func init() {

@@ -75,7 +75,7 @@ var apiSearchCmd = &cobra.Command{
 }
 
 func printAPIs(apis []interface{}) {
-	headers := []string{"API Name", "Version Name", "API ID", "Version ID", "Portal"}
+	headers := []string{"API NAME", "VERSION NAME", "API ID", "VERSION ID", "HAS PORTAL"}
 
 	data := make([][]string, 0)
 	for _, api := range apis {

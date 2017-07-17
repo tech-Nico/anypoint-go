@@ -55,7 +55,7 @@ func (client *RestClient) GET(path string) []byte {
 
 	utils.Debug(func() {
 		log.Println("REQEST")
-		log.Printf("POST %s", path)
+		log.Printf("GET %s", client.URI+path)
 	})
 	req, err := client.Sling.Get(path).Request()
 	if err != nil {
@@ -103,6 +103,10 @@ func validateResponse(response *http.Response, err error, method, path string) {
 
 	if response.StatusCode == 401 {
 		log.Fatal("Auth token expired. Please login again")
+	}
+
+	if response.StatusCode == 404 {
+		log.Fatalf("Entity not found")
 	}
 
 	if response.StatusCode >= 400 {
