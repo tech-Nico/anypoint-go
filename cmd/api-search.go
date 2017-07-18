@@ -1,4 +1,4 @@
-// Copyright © 2017 NAME HERE <EMAIL ADDRESS>
+// Copyright © 2017 Nico Balestra <functions@protonmail.com>
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -98,7 +98,7 @@ func printAPIs(apis []interface{}) {
 func init() {
 	apiCmd.AddCommand(apiSearchCmd)
 
-	apiSearchCmd.Flags().StringVar(&apiName, "name", "", "Name of the api")
+	apiSearchCmd.Flags().StringVarP(&apiName, "name", "n", "", "Name of the api")
 	apiSearchCmd.Flags().IntVar(&offset, "offset", 0, "Return results starting from the specified offset")
 	apiSearchCmd.Flags().IntVar(&limit, "limit", 25, "Number of results to return. Default to 25")
 }

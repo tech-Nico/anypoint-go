@@ -1,4 +1,4 @@
-// Copyright © 2017 NAME HERE <EMAIL ADDRESS>
+// Copyright © 2017 Nico Balestra <functions@protonmail.com>
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -11,11 +11,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+
 package cmd
 
 import (
 	"github.com/spf13/cobra"
 )
+
+var apiId, versionId int
 
 // apiCmd represents the api command
 var apiCmd = &cobra.Command{
@@ -45,5 +48,7 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// apiCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	endpointCmd.PersistentFlags().IntVar(&apiId, "api-id", 0, "ID of the API for which the endpoint will be managed")
+	endpointCmd.PersistentFlags().IntVar(&versionId, "version-id", 0, "ID of the API's version for which the endpoint will be managed")
 
 }

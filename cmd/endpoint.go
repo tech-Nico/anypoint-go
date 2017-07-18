@@ -1,4 +1,4 @@
-// Copyright © 2017 NAME HERE <EMAIL ADDRESS>
+// Copyright © 2017 Nico Balestra <functions@protonmail.com>
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -23,8 +23,6 @@ import (
 	"github.com/tech-nico/anypoint-cli/utils"
 	"encoding/json"
 )
-
-var apiId, versionId int
 
 // endpointCmd represents the endpoint command
 var endpointCmd = &cobra.Command{
@@ -95,6 +93,4 @@ func init() {
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	endpointCmd.Flags().IntVar(&apiId, "api-id", 0, "ID of the API for which the endpoint will be managed")
-	endpointCmd.Flags().IntVar(&versionId, "version-id", 0, "ID of the API's version for which the endpoint will be managed")
 }

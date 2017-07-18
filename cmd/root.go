@@ -1,4 +1,4 @@
-// Copyright © 2017 NAME HERE <EMAIL ADDRESS>
+// Copyright © 2017 Nico Balestra <functions@protonmail.com>
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -10,6 +10,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 
 package cmd
 
@@ -29,7 +30,7 @@ var debug bool
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
-	Use:   "anypoint-cli",
+	Use:   "ap-cli",
 	Short: "Anypoint Platform command line client",
 	Long: `Manage the Anypoint Platorm through the command line.
 
@@ -62,13 +63,13 @@ func init() {
 
 	// Global flags
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.anypoint-cli.yaml)")
-	RootCmd.PersistentFlags().StringVar(&outputFormat, "o", "list", "determines output format (json/yaml/csv)")
+	RootCmd.PersistentFlags().StringVarP(&outputFormat, "output", "o", "list", "determines output format (json/yaml/csv)")
 	RootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "Display debug information")
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	//RootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 	viper.BindPFlag(utils.KEY_DEBUG, RootCmd.PersistentFlags().Lookup("debug"))
-	viper.BindPFlag(utils.KEY_FORMAT, RootCmd.PersistentFlags().Lookup("o"))
+	viper.BindPFlag(utils.KEY_FORMAT, RootCmd.PersistentFlags().Lookup("output"))
 }
 
 // initConfig reads in config file and ENV variables if set.
