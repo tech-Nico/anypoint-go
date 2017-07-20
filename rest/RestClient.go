@@ -20,7 +20,25 @@ import (
 	"net/http"
 	"crypto/tls"
 	"github.com/tech-nico/anypoint-cli/utils"
+	"fmt"
+	"errors"
 )
+
+type httpError struct {
+	statusCode int
+	msg        string
+}
+
+func (e *httpError) Error() string {
+	return fmt.Sprintf("HTTP Error %d - %s", e.statusCode, e.msg)
+}
+
+func NewHttpError(code int, theMsg string) error {
+	return &httpError{
+		statusCode: code,
+		msg:        theMsg,
+	}
+}
 
 type RestClient struct {
 	URI    string
@@ -64,7 +82,7 @@ func (client *RestClient) AddHeader(key, value string) (*RestClient) {
 	return client
 }
 
-func (client *RestClient) GET(path string) []byte {
+func (client *RestClient) GET(path string) ([]byte, error) {
 
 	utils.Debug(func() {
 		log.Println("REQEST")
@@ -72,19 +90,28 @@ func (client *RestClient) GET(path string) []byte {
 	})
 	req, err := client.Sling.Get(path).Request()
 	if err != nil {
-		log.Fatalf("Error building GET request for path %s : %s", path, err)
+		fmt.Printf("\nError building GET request for path %s : %s\n", path, err)
+		return nil, err
 	}
 	res, err := client.client.Do(req)
 	defer res.Body.Close()
 
-	validateResponse(res, err, "GET", path)
+	httpErr := validateResponse(res, err, "GET", path)
+	if httpErr != nil {
+		utils.Debug(func() {
+			fmt.Printf("\nError while performing GET to %q\n", path)
+		})
+		return nil, httpErr
+	}
+
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		log.Fatal("Error while reading response for %s : %s ", path, err)
+		return nil, errors.New(fmt.Sprintf("Error while reading response for %s : %s ", path, err))
 	}
+
 	utils.Debug(logResponse("GET", path, res))
 
-	return body
+	return body, nil
 }
 
 //POST - Perform an HTTP POST
@@ -103,29 +130,30 @@ func (client *RestClient) POST(body interface{}, responseObj interface{}, path s
 
 	utils.Debug(logResponse("POST", path, response))
 
-	validateResponse(response, err, "POST", path)
+	httpErr := validateResponse(response, err, "POST", path)
 
-	return response, err
+	return response, httpErr
 }
 
-func validateResponse(response *http.Response, err error, method, path string) {
+func validateResponse(response *http.Response, err error, method, path string) error {
 
 	if err != nil {
-		log.Fatalf("Error while executing http POST %s : %s", path, err)
+		return err
 	}
 
 	if response.StatusCode == 401 {
-		log.Fatal("Auth token expired. Please login again")
+		return NewHttpError(401, "Auth token expired. Please login again")
 	}
 
 	if response.StatusCode == 404 {
-		log.Fatalf("Entity not found")
+		return NewHttpError(404, fmt.Sprintf("Entity %q not found", path))
 	}
 
 	if response.StatusCode >= 400 {
-		log.Fatalf("\nError while performing HTTP POST %s - %s\n Headers; %s", path, response.Status, response.Request.Header)
+		return NewHttpError(response.StatusCode, fmt.Sprintf("\nError when invoking endpoint %s - %s \nHeaders; %s", path, response.Status, response.Request.Header))
 	}
 
+	return nil
 }
 
 func logResponse(method, path string, response *http.Response) (func()) {

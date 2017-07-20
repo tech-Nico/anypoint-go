@@ -16,10 +16,10 @@ package rest
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 	"reflect"
 	"strings"
 	"github.com/tech-nico/anypoint-cli/utils"
+	"errors"
 )
 
 const (
@@ -28,7 +28,7 @@ const (
 	SEARCH_API_PATH   = "/apis?ascending=false&limit={limit}&offset={offset}&query={APIName}&sort={sortOrder}"
 	API_PATH          = BASE_PATH + ORG_PATH + "/apis/{apiId}"
 	VERSION_PATH      = API_PATH + "/versions/{versionId}"
-	API_ENDPONIT_PATH = VERSION_PATH + "/endpoint"
+	API_ENDPOINT_PATH = VERSION_PATH + "/endpoint"
 )
 
 type API struct {
@@ -73,7 +73,7 @@ func NewAPI(uri, token string) *API {
 	}
 }
 
-func (api *API) SearchAPIAsString(orgID string, params *SearchParameters) string {
+func (api *API) SearchAPIAsString(orgID string, params *SearchParameters) (string, error) {
 	typ := reflect.TypeOf(*params)
 
 	if params.SortOrder == "" {
@@ -87,45 +87,69 @@ func (api *API) SearchAPIAsString(orgID string, params *SearchParameters) string
 	}
 
 	path := api.getSearchURL(params, orgID)
-	apis := api.client.GET(path)
-	return string(apis)
+	apis, error := api.client.GET(path)
+
+	if error != nil {
+		fmt.Errorf("Error while searching for api using parameters %v. Error: %s", params, error)
+		return "", error
+	}
+
+	return string(apis), nil
 }
 
 //SearchAPIAsJSON - Search an API by name
-func (api *API) SearchAPIAsJSON(orgID string, params *SearchParameters) map[string]interface{} {
-	apis := []byte(api.SearchAPIAsString(orgID, params))
+func (api *API) SearchAPIAsJSON(orgID string, params *SearchParameters) (map[string]interface{}, error) {
+	resp, err := api.SearchAPIAsString(orgID, params)
+
+	if err != nil {
+		fmt.Errorf("Error while searching for api with parameters %v : %s", params, err)
+		return nil, err
+	}
+
+	apis := []byte(resp)
 	var jsonObj map[string]interface{}
 
 	if err := json.Unmarshal(apis, &jsonObj); err != nil {
-		fmt.Printf("Error while querying for api with name %s. : %s", params.Name, err)
-		os.Exit(1)
+		return nil, errors.New(fmt.Sprintf("Error while querying for api with name %s : %s", params.Name, err))
 	}
 
-	return jsonObj
+	return jsonObj, nil
 
 }
 
-func (api *API) GetEndpointAsJSONString(orgId string, apiId, versionId int) string {
+func (api *API) GetEndpointAsJSONString(orgId string, apiId, versionId int) (string, error) {
 	var path string
-	path = strings.Replace(API_ENDPONIT_PATH, "{orgId}", orgId, -1)
+	path = strings.Replace(API_ENDPOINT_PATH, "{orgId}", orgId, -1)
 	path = strings.Replace(path, "{apiId}", fmt.Sprint(apiId), -1)
 	path = strings.Replace(path, "{versionId}", fmt.Sprint(versionId), -1)
 
-	endpointStr := api.client.GET(path)
+	endpointStr, err := api.client.GET(path)
+	if err != nil {
+		fmt.Errorf("Error while getting endpoint for API %d(version-id %d)", apiId, versionId)
+		return "", err
+	}
 
-	return string(endpointStr)
+	return string(endpointStr), nil
 }
 
-func (api *API) GetEndpointAsMap(orgId string, apiId, versionId int) map[string]interface{} {
-	endpoint := []byte(api.GetEndpointAsJSONString(orgId, apiId, versionId))
+func (api *API) GetEndpointAsMap(orgId string, apiId, versionId int) (map[string]interface{}, error) {
+	resp, err := api.GetEndpointAsJSONString(orgId, apiId, versionId)
+
+	if err != nil {
+		fmt.Errorf("Error while retrieving endpoint for API %d (version-id %d)", apiId, versionId)
+		return nil, err
+
+	}
+
+	endpoint := []byte(resp)
 	var jsonObj map[string]interface{}
 
 	if err := json.Unmarshal(endpoint, &jsonObj); err != nil {
-		fmt.Printf("Error while retrieving endpoint: %s", err)
-		os.Exit(1)
+		fmt.Errorf("Error while retrieving endpoint: %s", err)
+		return nil, err
 	}
 
-	return jsonObj
+	return jsonObj, nil
 
 }
 

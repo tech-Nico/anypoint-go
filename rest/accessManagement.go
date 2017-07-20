@@ -15,9 +15,7 @@ package rest
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
-	"os"
 	"strings"
 )
 
@@ -74,8 +72,7 @@ func Login(httpClient *RestClient, uri, pUsername, pPassword string) string {
 	_, err := httpClient.POST(body, &authToken, LOGIN)
 
 	if err != nil {
-		log.Fatal("Error during login with user '", pUsername, "': ", err)
-		os.Exit(1)
+		log.Fatalf("Error during login with user %q : %s", pUsername, err)
 	} else {
 		log.Print("Been able to login: ", *authToken)
 	}
@@ -86,22 +83,32 @@ func Login(httpClient *RestClient, uri, pUsername, pPassword string) string {
 
 func (auth *Auth) Me() []byte {
 	log.Printf("Call to %s", ME)
+	resp, err := auth.client.GET(ME)
 
-	return auth.client.GET(ME)
+	if err != nil {
+		log.Fatalf("Error while retrieving user details: %s", err)
+	}
+
+	return resp
 }
 
 func (auth *Auth) Hierarchy() []byte {
 	me := auth.Me()
 	var data map[string]interface{}
 	if err := json.Unmarshal(me, &data); err != nil {
-		fmt.Printf("Error while marshalling JSON response to 'Me' endpoint: %v", err)
-		fmt.Printf("\nData was %s ", me)
-		os.Exit(1)
+		log.Fatalf("Invalid JSON response when retrieving user details: %s", err)
 	}
+
 	orgId := data["user"].(map[string]interface{})["organization"].(map[string]interface{})["id"].(string)
 	path := strings.Replace(HIERARCHY, "{orgId}", orgId, -1)
 
-	return auth.client.GET(path)
+	resp, err := auth.client.GET(path)
+
+	if err != nil {
+		log.Fatalf("HTTP error while retrieving user details: %s", err)
+	}
+
+	return resp
 }
 
 
@@ -114,7 +121,7 @@ func (auth *Auth) FindBusinessGroup(path string) string {
 	hierarchy := auth.Hierarchy()
 
 	if err := json.Unmarshal(hierarchy, &data); err != nil {
-		panic("Error while querying for hierarchy..")
+		log.Fatalf("Error while querying for hierarchy : %s", err)
 	}
 
 	subOrganizations := data["subOrganizations"].([]interface{})
@@ -136,7 +143,7 @@ func (auth *Auth) FindBusinessGroup(path string) string {
 	}
 
 	if currentOrgId == "" {
-		panic("Cannot find business group " + path)
+		log.Fatalf("Cannot find business group %s", path)
 	}
 
 	return currentOrgId
