@@ -22,20 +22,39 @@ import (
 	"github.com/tech-nico/anypoint-cli/utils"
 	"fmt"
 	"errors"
+	"io"
 )
 
-type httpError struct {
-	statusCode int
+type HttpError struct {
+	StatusCode int
 	msg        string
 }
 
-func (e *httpError) Error() string {
-	return fmt.Sprintf("HTTP Error %d - %s", e.statusCode, e.msg)
+type ContentType int
+
+const (
+	Application_Json            ContentType = iota
+	Application_OctetStream
+	Application_Pdf
+	Application_Atom_Xml
+	Application_Form_Urlencoded
+	Application_SVG_XML
+	Application_XHTML_XML
+	Application_XML
+	Multipart_Form_Data
+	Text_HTML
+	Text_Plain
+	Text_XML
+	Wildcard
+)
+
+func (e *HttpError) Error() string {
+	return fmt.Sprintf("HTTP Error %d - %s", e.StatusCode, e.msg)
 }
 
 func NewHttpError(code int, theMsg string) error {
-	return &httpError{
-		statusCode: code,
+	return &HttpError{
+		StatusCode: code,
 		msg:        theMsg,
 	}
 }
@@ -99,7 +118,7 @@ func (client *RestClient) GET(path string) ([]byte, error) {
 	httpErr := validateResponse(res, err, "GET", path)
 	if httpErr != nil {
 		utils.Debug(func() {
-			fmt.Printf("\nError while performing GET to %q\n", path)
+			fmt.Printf("\nError while performing GET to %q\nError: %s", path, httpErr)
 		})
 		return nil, httpErr
 	}
@@ -115,24 +134,56 @@ func (client *RestClient) GET(path string) ([]byte, error) {
 }
 
 //POST - Perform an HTTP POST
-func (client *RestClient) POST(body interface{}, responseObj interface{}, path string) (*http.Response, error) {
+func (client *RestClient) PATCH(body interface{}, path string, cType ContentType, responseObj interface{}) (*http.Response, error) {
+
+	utils.Debug(func() {
+		log.Println("REQEST")
+		log.Printf("PATCH %s%s", client.URI, path)
+	})
+	sling := client.Sling.Patch(path)
+	sling = setSlingBodyForContentType(cType, sling, body)
+
+	response, err := sling.ReceiveSuccess(responseObj)
+
+	utils.Debug(logResponse("PATCH", path, response))
+
+	httpErr := validateResponse(response, err, "POST", path)
+
+	return response, httpErr
+}
+
+//POST - Perform an HTTP POST
+func (client *RestClient) POST(body interface{}, path string, cType ContentType, responseObj interface{}) (*http.Response, error) {
 
 	utils.Debug(func() {
 		log.Println("REQEST")
 		log.Printf("POST %s%s", client.URI, path)
 	})
 
-	response, err := client.
-	Sling.
-		Post(path).
-		BodyJSON(body).
-		ReceiveSuccess(responseObj)
+	sling := client.Sling.Post(path)
+
+	sling = setSlingBodyForContentType(cType, sling, body)
+
+	response, err := sling.ReceiveSuccess(responseObj)
 
 	utils.Debug(logResponse("POST", path, response))
 
 	httpErr := validateResponse(response, err, "POST", path)
 
 	return response, httpErr
+}
+func setSlingBodyForContentType(cType ContentType, sling *sling.Sling, body interface{}) *sling.Sling {
+	switch cType {
+	case Application_Json:
+		sling = sling.BodyJSON(body)
+	case Application_Form_Urlencoded:
+		sling = sling.BodyForm(body)
+	case Application_OctetStream:
+		sling = sling.Body(body.(io.Reader))
+	default:
+		sling = sling.Body(body.(io.Reader))
+	}
+	return sling
 }
 
 func validateResponse(response *http.Response, err error, method, path string) error {

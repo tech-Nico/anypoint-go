@@ -31,6 +31,20 @@ const (
 	API_ENDPOINT_PATH = VERSION_PATH + "/endpoint"
 )
 
+type Endpoint struct {
+	Id                   int                        `json:"id"`
+	OrgID                string                `json:"masterOrganizationId"`
+	ApiID                int
+	VersionID            int                `json:"apiVersionId"`
+	Type                 string                `json:"type"`
+	Uri                  string                    `json:"uri"`
+	ProxyUri             string                `json:"proxyUri"`
+	ProxyRegistrationUri string `json:"proxyRegistrationUri"`
+	IsCloudHub           bool                `json:"isCloudHub"`
+	ReferencesUserDomain bool    `json:"referencesUserDomain"`
+	ResponseTimeout      int            `json:"responseTimeout"`
+}
+
 type API struct {
 	client *RestClient
 }
@@ -166,6 +180,38 @@ func (api *API) getSearchURL(params *SearchParameters, orgId string) string {
 	})
 
 	return path
+}
+
+func (api *API) SetEndpoint(endpoint *Endpoint) (error) {
+	_, err := api.GetEndpointAsMap(endpoint.OrgID, endpoint.ApiID, endpoint.VersionID)
+	exists := true
+
+	if err, ok := err.(*HttpError); ok {
+		if err.StatusCode == 404 {
+			exists = false
+		} else {
+			return err
+		}
+	}
+
+	var path string
+	path = strings.Replace(API_ENDPOINT_PATH, "{orgId}", endpoint.OrgID, -1)
+	path = strings.Replace(path, "{apiId}", fmt.Sprint(endpoint.ApiID), -1)
+	path = strings.Replace(path, "{versionId}", fmt.Sprint(endpoint.VersionID), -1)
+
+	if exists {
+		respObj := &Endpoint{}
+		_, err := api.client.PATCH(endpoint, path, Application_Json, respObj)
+
+		return err
+
+	} else {
+		respObj := make(map[string]interface{})
+		_, err := api.client.POST(endpoint, path, Application_Json, respObj)
+		return err
+	}
+
+	return nil
 }
 
 func getSearchFilter(filter string) Filters {

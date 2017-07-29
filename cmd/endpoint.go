@@ -22,6 +22,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/tech-nico/anypoint-cli/utils"
 	"encoding/json"
+	"log"
 )
 
 // endpointCmd represents the endpoint command
@@ -48,11 +49,18 @@ var endpointCmd = &cobra.Command{
 		format := viper.GetString(utils.KEY_FORMAT)
 		switch format {
 		case "list":
-			res := apiClient.GetEndpointAsMap(viper.GetString(utils.KEY_ORG_ID), apiId, versionId)
+			res, err := apiClient.GetEndpointAsMap(viper.GetString(utils.KEY_ORG_ID), apiId, versionId)
+			if err != nil {
+				log.Fatalf("Error while retrieving endpoint for api %d (version %d): %s", apiId, versionId, err)
+			}
 			printEndpoint(res)
 			break
 		case "json":
-			res := apiClient.GetEndpointAsJSONString(viper.GetString(utils.KEY_ORG_ID), apiId, versionId)
+			res, err := apiClient.GetEndpointAsJSONString(viper.GetString(utils.KEY_ORG_ID), apiId, versionId)
+			if err != nil {
+				log.Fatalf("Error while retrieving endpoint for api %d (version %d): %s", apiId, versionId, err)
+			}
+
 			b, err := json.MarshalIndent(res, "", "  ")
 			if err != nil {
 				fmt.Println("error:", err)
@@ -65,10 +73,11 @@ var endpointCmd = &cobra.Command{
 }
 
 func printEndpoint(endpoint map[string]interface{}) {
-	headers := []string{"TYPE", "URI", "PROXY URI", "PROXY REGISTRATION URI", "USE DOMAIN", "RESPONSE TIMEOUT"}
+	headers := []string{"ID", "TYPE", "URI", "PROXY URI", "PROXY REGISTRATION URI", "USE DOMAIN", "RESPONSE TIMEOUT"}
 
 	data := make([][]string, 1)
 	data[0] = []string{
+		fmt.Sprint(endpoint["id"]),
 		fmt.Sprint(endpoint["type"]),
 		fmt.Sprint(endpoint["uri"]),
 		fmt.Sprint(endpoint["proxyUri"]),

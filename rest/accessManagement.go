@@ -69,7 +69,7 @@ func Login(httpClient *RestClient, uri, pUsername, pPassword string) string {
 
 	authToken := new(AuthToken)
 
-	_, err := httpClient.POST(body, &authToken, LOGIN)
+	_, err := httpClient.POST(body, LOGIN, Application_Json, &authToken)
 
 	if err != nil {
 		log.Fatalf("Error during login with user %q : %s", pUsername, err)

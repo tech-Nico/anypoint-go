@@ -21,6 +21,7 @@ import (
 	"github.com/tech-nico/anypoint-cli/rest"
 	"github.com/tech-nico/anypoint-cli/utils"
 	"encoding/json"
+	"log"
 )
 
 var apiName string
@@ -53,7 +54,10 @@ var apiSearchCmd = &cobra.Command{
 		format := viper.GetString(utils.KEY_FORMAT)
 		switch format {
 		case "list":
-			res := apiClient.SearchAPIAsJSON(viper.GetString(utils.KEY_ORG_ID), searchParameter)
+			res, err := apiClient.SearchAPIAsJSON(viper.GetString(utils.KEY_ORG_ID), searchParameter)
+			if err != nil {
+				log.Fatalf("Error when searching for api %s - %s", searchParameter.Name, err)
+			}
 
 			total := res["total"].(float64)
 			if total > 0 {
@@ -62,7 +66,10 @@ var apiSearchCmd = &cobra.Command{
 			}
 			break
 		case "json":
-			res := apiClient.SearchAPIAsJSON(viper.GetString(utils.KEY_ORG_ID), searchParameter)
+			res, err := apiClient.SearchAPIAsJSON(viper.GetString(utils.KEY_ORG_ID), searchParameter)
+			if err != nil {
+				log.Fatalf("Error when searching for api %s - %s", searchParameter.Name, err)
+			}
 			b, err := json.MarshalIndent(res, "", "  ")
 			if err != nil {
 				fmt.Println("error:", err)
