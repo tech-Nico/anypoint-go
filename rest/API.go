@@ -20,6 +20,7 @@ import (
 	"strings"
 	"github.com/tech-nico/anypoint-cli/utils"
 	"errors"
+	"log"
 )
 
 const (
@@ -29,6 +30,8 @@ const (
 	API_PATH          = BASE_PATH + ORG_PATH + "/apis/{apiId}"
 	VERSION_PATH      = API_PATH + "/versions/{versionId}"
 	API_ENDPOINT_PATH = VERSION_PATH + "/endpoint"
+	APPLICATIONS      = "/armui/api/v1/applications"
+	ENVIRONMENTS      = "/accounts/api/organizations/{orgId}/environments"
 )
 
 type Endpoint struct {
@@ -212,6 +215,57 @@ func (api *API) SetEndpoint(endpoint *Endpoint) (error) {
 	}
 
 	return nil
+}
+
+func (api *API) FindEnvironmentByName(orgId, environment string) (map[string]interface{}, error) {
+
+	path := strings.Replace(ENVIRONMENTS, "{orgId}", orgId, -1)
+
+	resp, err := api.client.GET(path)
+
+	utils.Debug(func() {
+		log.Printf("FindEnvironmentByName: Get response: %s : %s", resp, err)
+	})
+
+	if err != nil {
+		fmt.Errorf("Error while searching for environment %s : %s", environment, err)
+		return nil, err
+	}
+
+	envs := []byte(resp)
+	var jsonObj map[string]interface{}
+
+	if err := json.Unmarshal(envs, &jsonObj); err != nil {
+		return nil, errors.New(fmt.Sprintf("Error while searching for environment %s : %s", environment, err))
+	}
+
+	total := jsonObj["total"].(float64)
+
+	if total == 0 {
+		fmt.Printf("No environment found %q", environment)
+		utils.Debug(func() {
+			log.Printf("Environment %q not found", environment)
+		})
+		return nil, nil
+	}
+
+	data := jsonObj["data"].([]interface{})
+
+	for _, elem := range data {
+		if elemMap, ok := elem.(map[string]interface{}); ok {
+			if strings.ToUpper(fmt.Sprint(elemMap["name"])) == strings.ToUpper(environment) {
+				return elemMap, nil
+			}
+		}
+	}
+
+	return nil, nil
+}
+
+func (api *API) GetApplications(orgId, environment, appName string) {
+	//path := APPLICATIONS
+	api.FindEnvironmentByName(orgId, environment)
+
 }
 
 func getSearchFilter(filter string) Filters {

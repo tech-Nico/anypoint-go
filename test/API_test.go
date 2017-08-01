@@ -36,7 +36,10 @@ func Test_SearchAPIAsJSON(t *testing.T) {
 
 	api := rest.NewAPIWithCredentials(uri, username, password)
 
-	searchRes := api.SearchAPIAsJSON(orgId, searchParams)
+	searchRes, err := api.SearchAPIAsJSON(orgId, searchParams)
+	if err != nil {
+		t.Fatalf("Error while searching for api %v : %v", searchParams, err)
+	}
 	t.Logf("Search results : %s", searchRes)
 	if searchRes == nil {
 		t.Errorf("Unable to find api using criteria %s", searchParams)
@@ -46,5 +49,26 @@ func Test_SearchAPIAsJSON(t *testing.T) {
 		t.Errorf("API not found.")
 	}
 
+}
+
+func Test_FindEnvironments(t *testing.T) {
+
+	searchEnv := "Production"
+
+	username, password, uri, orgId := prepTest(t)
+
+	api := rest.NewAPIWithCredentials(uri, username, password)
+
+	env, err := api.FindEnvironmentByName(orgId, searchEnv)
+
+	if err != nil {
+		t.Fatalf("Error while searching for environment %q: %s", searchEnv, err)
+	}
+
+	if env != nil {
+		t.Logf("Environment found: %q", env["name"])
+	} else {
+		t.Errorf("I was expecting to find environment %q but it couldn't be found", searchEnv)
+	}
 }
 

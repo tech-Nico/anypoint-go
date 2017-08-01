@@ -11,17 +11,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package cmd
 
 import (
 	"github.com/spf13/cobra"
 )
 
-var apiId, versionId int
-
 // apiCmd represents the api command
-var apiCmd = &cobra.Command{
+var setApiCmd = &cobra.Command{
 	Use:   "api",
 	Short: "Work with APIs managed by MuleSoft Anypoint Platform",
 	Long: `Manage APIs created and governed onto the MuleSoft Anypoint Platform.
@@ -37,7 +34,7 @@ var apiCmd = &cobra.Command{
 }
 
 func init() {
-	RootCmd.AddCommand(apiCmd)
+	setCmd.AddCommand(setApiCmd)
 
 	// Here you will define your flags and configuration settings.
 
@@ -48,7 +45,6 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// apiCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-	endpointCmd.PersistentFlags().IntVar(&apiId, "api-id", 0, "ID of the API for which the endpoint will be managed")
-	endpointCmd.PersistentFlags().IntVar(&versionId, "version-id", 0, "ID of the API's version for which the endpoint will be managed")
-
+	setApiCmd.PersistentFlags().IntVar(&apiId, "api-id", 0, "ID of the API for which the endpoint will be managed")
+	setApiCmd.PersistentFlags().IntVar(&versionId, "version-id", 0, "ID of the API's version for which the endpoint will be managed")
 }

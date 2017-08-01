@@ -11,6 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+
 package cmd
 
 import (
@@ -24,18 +25,22 @@ import (
 	"log"
 )
 
+var apiId, versionId int
 var apiName string
 var offset, limit int
 
-// appCmd represents the app command
-var apiSearchCmd = &cobra.Command{
-	Use:   "search",
-	Short: "Search an API",
-	Long: `Search an API by various criteria. For example:
-  api search --name "My API" --limit 10 --filter Portal
-  `,
+// apiCmd represents the api command
+var apiCmd = &cobra.Command{
+	Use:   "api",
+	Short: "Work with APIs managed by MuleSoft Anypoint Platform",
+	Long: `Manage APIs created and governed onto the MuleSoft Anypoint Platform.
+	This command allows you to:
+	List apis
+	List versions
+	Create APIs and API versions
+	Configure APIs
+	Deploy API proxies`,
 	Run: func(cmd *cobra.Command, args []string) {
-
 		if apiName == "" {
 			cmd.Usage()
 			fmt.Println("Error: Please use option --name to specify a search criteria")
@@ -78,7 +83,27 @@ var apiSearchCmd = &cobra.Command{
 			break
 		}
 
+
 	},
+}
+
+func init() {
+	getCmd.AddCommand(apiCmd)
+
+	// Here you will define your flags and configuration settings.
+
+	// Cobra supports Persistent Flags which will work for this command
+	// and all subcommands, e.g.:
+	// apiCmd.PersistentFlags().String("foo", "", "A help for foo")
+
+	// Cobra supports local flags which will only run when this command
+	// is called directly, e.g.:
+	// apiCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	apiCmd.PersistentFlags().IntVar(&apiId, "api-id", 0, "ID of the API for which the endpoint will be managed")
+	apiCmd.PersistentFlags().IntVar(&versionId, "version-id", 0, "ID of the API's version for which the endpoint will be managed")
+	apiCmd.Flags().StringVarP(&apiName, "name", "n", "", "Name of the api")
+	apiCmd.Flags().IntVar(&offset, "offset", 0, "Return results starting from the specified offset")
+	apiCmd.Flags().IntVar(&limit, "limit", 25, "Number of results to return. Default to 25")
 }
 
 func printAPIs(apis []interface{}) {
@@ -102,10 +127,3 @@ func printAPIs(apis []interface{}) {
 	utils.PrintTabular(headers, data)
 }
 
-func init() {
-	apiCmd.AddCommand(apiSearchCmd)
-
-	apiSearchCmd.Flags().StringVarP(&apiName, "name", "n", "", "Name of the api")
-	apiSearchCmd.Flags().IntVar(&offset, "offset", 0, "Return results starting from the specified offset")
-	apiSearchCmd.Flags().IntVar(&limit, "limit", 25, "Number of results to return. Default to 25")
-}
