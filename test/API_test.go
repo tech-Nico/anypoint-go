@@ -54,6 +54,7 @@ func Test_SearchAPIAsJSON(t *testing.T) {
 func Test_FindEnvironments(t *testing.T) {
 
 	searchEnv := "Production"
+	appName := "ciccio"
 
 	username, password, uri, orgId := prepTest(t)
 
@@ -70,5 +71,14 @@ func Test_FindEnvironments(t *testing.T) {
 	} else {
 		t.Errorf("I was expecting to find environment %q but it couldn't be found", searchEnv)
 	}
+
+	app, err := api.ApplicationsByName(orgId, searchEnv, "ciccio")
+
+	if err != nil {
+		t.Fatalf("GetApplication did not work while searching for app %q : %s", appName, err)
+	}
+
+	t.Logf("I was able to find app %q : %s", appName, app)
+
 }
 

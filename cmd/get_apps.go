@@ -19,6 +19,7 @@ import (
 	"github.com/tech-nico/anypoint-cli/rest"
 	"github.com/spf13/viper"
 	"github.com/tech-nico/anypoint-cli/utils"
+	"fmt"
 )
 
 var appName, envName string
@@ -40,9 +41,22 @@ to quickly create a Cobra application.`,
 			log.Fatalf("Please specify --environment parameter")
 		}
 
+		apiMgr := rest.NewAPI(viper.GetString(utils.KEY_URI), viper.GetString(utils.KEY_TOKEN))
+
 		if appName != "" {
-			apiMgr := rest.NewAPI(viper.GetString(utils.KEY_URI), viper.GetString(utils.KEY_TOKEN))
-			apiMgr.GetApplications(viper.GetString(utils.KEY_ORG_ID), envName, appName)
+			app, err := apiMgr.ApplicationsByName(viper.GetString(utils.KEY_ORG_ID), envName, appName)
+			if err != nil {
+				log.Fatalf("Error when sarching for app %q : %s", appName, err)
+			}
+
+			fmt.Println("App found: %s", app)
+		} else {
+			apps, err := apiMgr.GetApplications(viper.GetString(utils.KEY_ORG_ID), envName)
+			if err != nil {
+				log.Fatalf("Error retrieving all applications: %s", err)
+			}
+
+			printApps(apps)
 		}
 	},
 }
@@ -53,3 +67,30 @@ func init() {
 	appCmd.Flags().StringVarP(&appName, "app-name", "a", "", "Name of the app to search for")
 	appCmd.Flags().StringVarP(&envName, "environment", "e", "", "Environment name")
 }
+
+func printApps(apps []interface{}) {
+	headers := []string{"NAME", "SERVER TYPE", "SERVER NAME", "STATUS", "FILE"}
+
+	data := make([][]string, 0)
+	for _, val := range apps {
+		app := val.(map[string]interface{})
+		artifact := app["artifact"].(map[string]interface{})
+		name := fmt.Sprint(artifact["name"])
+		target := app["target"].(map[string]interface{})
+		serverType := fmt.Sprint(target["type"])
+		if serverType == "<nil>" {
+			serverType = "<Unknown>"
+		}
+		serverName := fmt.Sprint(target["name"])
+		if serverName == "<nil>" {
+			serverName = "<Unknown>"
+		}
+		status := fmt.Sprint(app["lastReportedStatus"])
+		file := fmt.Sprint(artifact["fileName"])
+		row := []string{name, serverType, serverName, status, file}
+		data = append(data, row)
+	}
+
+	utils.PrintTabular(headers, data)
+}
+

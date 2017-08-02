@@ -232,11 +232,9 @@ func (api *API) FindEnvironmentByName(orgId, environment string) (map[string]int
 		return nil, err
 	}
 
-	envs := []byte(resp)
-	var jsonObj map[string]interface{}
-
-	if err := json.Unmarshal(envs, &jsonObj); err != nil {
-		return nil, errors.New(fmt.Sprintf("Error while searching for environment %s : %s", environment, err))
+	jsonObj, err := responseAsJson(resp)
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("Error while searching for environment %q : %s", environment, err))
 	}
 
 	total := jsonObj["total"].(float64)
@@ -262,9 +260,63 @@ func (api *API) FindEnvironmentByName(orgId, environment string) (map[string]int
 	return nil, nil
 }
 
-func (api *API) GetApplications(orgId, environment, appName string) {
-	//path := APPLICATIONS
-	api.FindEnvironmentByName(orgId, environment)
+func (api *API) ApplicationsByName(orgId, environment, appName string) (map[string]interface{}, error) {
+
+	allApps, err := api.GetApplications(orgId, environment)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(allApps) == 0 {
+		return nil, nil
+	}
+
+	for _, elem := range allApps {
+		if elemMap, ok := elem.(map[string]interface{}); ok {
+			artifact := elemMap["artifact"].(map[string]interface{})
+
+			if strings.Contains(strings.ToUpper(artifact["name"].(string)), strings.ToUpper(appName)) {
+				return elemMap, nil
+			}
+		}
+	}
+	return nil, nil
+
+}
+
+func (api *API) GetApplications(orgId, environment string) ([]interface{}, error) {
+
+	env, err := api.FindEnvironmentByName(orgId, environment)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if env == nil {
+		return nil, errors.New(fmt.Sprintf("Environment %q not found", environment))
+	}
+	api.client.AddEnvHeader(env["id"].(string))
+	api.client.AddOrgHeader(orgId)
+	path := APPLICATIONS
+	resp, err := api.client.GET(path)
+
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("GetApplication : %s", err))
+	}
+
+	jsonObj, err := responseAsJson(resp)
+
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("Error while retrieving all application : %s", err))
+	}
+
+	data := jsonObj["data"].([]interface{})
+
+	if len(data) == 0 {
+		return nil, nil
+	}
+
+	return data, nil
 
 }
 
@@ -282,4 +334,15 @@ func getSearchFilter(filter string) Filters {
 		panic("Invalid filter specified: " + filter)
 
 	}
+}
+
+func responseAsJson(resp []byte) (map[string]interface{}, error) {
+	buff := []byte(resp)
+	var jsonObj map[string]interface{}
+
+	if err := json.Unmarshal(buff, &jsonObj); err != nil {
+		return nil, errors.New(fmt.Sprintf("Error while json parsing %s", err))
+	}
+
+	return jsonObj, nil
 }
