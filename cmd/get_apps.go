@@ -15,49 +15,56 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
-	"log"
 	"github.com/tech-nico/anypoint-cli/rest"
 	"github.com/spf13/viper"
 	"github.com/tech-nico/anypoint-cli/utils"
 	"fmt"
 )
 
-var appName, envName string
+var appName string
 
 
 // appCmd represents the app command
 var appCmd = &cobra.Command{
-	Use:   "app",
-	Short: "A brief description of your command",
+	Use:     "app",
+	Aliases: []string{"apps", "application", "applications"},
+	Short:   "A brief description of your command",
 	Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command. For example:
 
 Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 
 		if envName == "" {
-			log.Fatalf("Please specify --environment parameter")
+			return fmt.Errorf("Please specify --environment parameter")
 		}
 
 		apiMgr := rest.NewAPI(viper.GetString(utils.KEY_URI), viper.GetString(utils.KEY_TOKEN))
+		var apps []interface{}
+		var err error
 
 		if appName != "" {
-			app, err := apiMgr.ApplicationsByName(viper.GetString(utils.KEY_ORG_ID), envName, appName)
+			var app map[string]interface{}
+			app, err = apiMgr.GetApplicationByName(viper.GetString(utils.KEY_ORG_ID), envName, appName)
 			if err != nil {
-				log.Fatalf("Error when sarching for app %q : %s", appName, err)
+				return fmt.Errorf("Error when sarching for app %q : %s", appName, err)
 			}
 
-			fmt.Println("App found: %s", app)
+			apps = make([]interface{}, 0)
+			if app != nil {
+				apps = append(apps, app)
+			}
 		} else {
-			apps, err := apiMgr.GetApplications(viper.GetString(utils.KEY_ORG_ID), envName)
+			apps, err = apiMgr.GetApplications(viper.GetString(utils.KEY_ORG_ID), envName)
 			if err != nil {
-				log.Fatalf("Error retrieving all applications: %s", err)
+				return fmt.Errorf("Error retrieving all applications: %s", err)
 			}
-
-			printApps(apps)
 		}
+
+		printApps(apps)
+		return nil
 	},
 }
 
@@ -65,7 +72,7 @@ func init() {
 	getCmd.AddCommand(appCmd)
 
 	appCmd.Flags().StringVarP(&appName, "app-name", "a", "", "Name of the app to search for")
-	appCmd.Flags().StringVarP(&envName, "environment", "e", "", "Environment name")
+
 }
 
 func printApps(apps []interface{}) {
@@ -93,4 +100,3 @@ func printApps(apps []interface{}) {
 
 	utils.PrintTabular(headers, data)
 }
-

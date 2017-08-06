@@ -17,6 +17,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var envName string
+
 // apiCmd represents the api command
 var getCmd = &cobra.Command{
 	Use:   "get",
@@ -31,5 +33,5 @@ Specify --help for a list of objects you can get.`,
 
 func init() {
 	RootCmd.AddCommand(getCmd)
-
+	getCmd.PersistentFlags().StringVarP(&envName, "environment", "e", "", "Environment name")
 }

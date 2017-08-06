@@ -19,7 +19,6 @@ import (
 	"reflect"
 	"strings"
 	"github.com/tech-nico/anypoint-cli/utils"
-	"errors"
 	"log"
 )
 
@@ -30,8 +29,10 @@ const (
 	API_PATH          = BASE_PATH + ORG_PATH + "/apis/{apiId}"
 	VERSION_PATH      = API_PATH + "/versions/{versionId}"
 	API_ENDPOINT_PATH = VERSION_PATH + "/endpoint"
-	APPLICATIONS      = "/armui/api/v1/applications"
 	ENVIRONMENTS      = "/accounts/api/organizations/{orgId}/environments"
+	ARM               = "/armui/api/v1"
+	APPLICATIONS      = ARM + "/applications"
+	SERVERS           = ARM + "/servers"
 )
 
 type Endpoint struct {
@@ -127,7 +128,7 @@ func (api *API) SearchAPIAsJSON(orgID string, params *SearchParameters) (map[str
 	var jsonObj map[string]interface{}
 
 	if err := json.Unmarshal(apis, &jsonObj); err != nil {
-		return nil, errors.New(fmt.Sprintf("Error while querying for api with name %s : %s", params.Name, err))
+		return nil, fmt.Errorf("Error while querying for api with name %s : %s", params.Name, err)
 	}
 
 	return jsonObj, nil
@@ -234,7 +235,7 @@ func (api *API) FindEnvironmentByName(orgId, environment string) (map[string]int
 
 	jsonObj, err := responseAsJson(resp)
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("Error while searching for environment %q : %s", environment, err))
+		return nil, fmt.Errorf("Error while searching for environment %q : %s", environment, err)
 	}
 
 	total := jsonObj["total"].(float64)
@@ -260,7 +261,7 @@ func (api *API) FindEnvironmentByName(orgId, environment string) (map[string]int
 	return nil, nil
 }
 
-func (api *API) ApplicationsByName(orgId, environment, appName string) (map[string]interface{}, error) {
+func (api *API) GetApplicationByName(orgId, environment, appName string) (map[string]interface{}, error) {
 
 	allApps, err := api.GetApplications(orgId, environment)
 	if err != nil {
@@ -275,7 +276,7 @@ func (api *API) ApplicationsByName(orgId, environment, appName string) (map[stri
 		if elemMap, ok := elem.(map[string]interface{}); ok {
 			artifact := elemMap["artifact"].(map[string]interface{})
 
-			if strings.Contains(strings.ToUpper(artifact["name"].(string)), strings.ToUpper(appName)) {
+			if strings.ToUpper(fmt.Sprint(artifact["name"])) == strings.ToUpper(appName) {
 				return elemMap, nil
 			}
 		}
@@ -284,8 +285,33 @@ func (api *API) ApplicationsByName(orgId, environment, appName string) (map[stri
 
 }
 
-func (api *API) GetApplications(orgId, environment string) ([]interface{}, error) {
+func (api *API) SearchAllApplicationsByName(orgId, environment, appName string) ([]interface{}, error) {
 
+	allApps, err := api.GetApplications(orgId, environment)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(allApps) == 0 {
+		return nil, nil
+	}
+
+	found := make([]interface{}, 0)
+
+	for _, elem := range allApps {
+		if elemMap, ok := elem.(map[string]interface{}); ok {
+			artifact := elemMap["artifact"].(map[string]interface{})
+
+			if strings.ToUpper(fmt.Sprint(artifact["name"])) == strings.ToUpper(appName) {
+				found = append(found, elemMap)
+			}
+		}
+	}
+	return found, nil
+
+}
+
+func (api *API) getArm(path, orgId, environment string) ([]interface{}, error) {
 	env, err := api.FindEnvironmentByName(orgId, environment)
 
 	if err != nil {
@@ -293,21 +319,25 @@ func (api *API) GetApplications(orgId, environment string) ([]interface{}, error
 	}
 
 	if env == nil {
-		return nil, errors.New(fmt.Sprintf("Environment %q not found", environment))
+		return nil, fmt.Errorf("Environment %q not found", environment)
 	}
 	api.client.AddEnvHeader(env["id"].(string))
 	api.client.AddOrgHeader(orgId)
-	path := APPLICATIONS
+
 	resp, err := api.client.GET(path)
 
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("GetApplication : %s", err))
+		return nil, fmt.Errorf("Error in getArm with path %q : %s", path, err)
 	}
+
+	utils.Debug(func() {
+		log.Printf("GET %q response : %s", path, resp)
+	})
 
 	jsonObj, err := responseAsJson(resp)
 
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("Error while retrieving all application : %s", err))
+		return nil, fmt.Errorf("Error while retrieving ARM data %q : %s", path, err)
 	}
 
 	data := jsonObj["data"].([]interface{})
@@ -318,6 +348,34 @@ func (api *API) GetApplications(orgId, environment string) ([]interface{}, error
 
 	return data, nil
 
+}
+
+func (api *API) GetApplications(orgId, environment string) ([]interface{}, error) {
+	return api.getArm(APPLICATIONS, orgId, environment)
+}
+
+func (api *API) GetAllServers(orgId, environment string) ([]interface{}, error) {
+	return api.getArm(SERVERS, orgId, environment)
+}
+
+func (api *API) SearchServers(orgId, environment, serverName string, ) ([]interface{}, error) {
+	servers, err := api.GetAllServers(orgId, environment)
+
+	if err != nil {
+		return nil, fmt.Errorf("Error while searching for server %q : %s", serverName, err)
+	}
+
+	toReturn := make([]interface{}, 0)
+
+	for _, server := range servers {
+		currServer := server.(map[string]interface{})
+		name := fmt.Sprint(currServer["name"])
+		if strings.Contains(strings.ToUpper(name), strings.ToUpper(serverName)) {
+			toReturn = append(toReturn, currServer)
+		}
+	}
+
+	return toReturn, nil
 }
 
 func getSearchFilter(filter string) Filters {
@@ -341,7 +399,7 @@ func responseAsJson(resp []byte) (map[string]interface{}, error) {
 	var jsonObj map[string]interface{}
 
 	if err := json.Unmarshal(buff, &jsonObj); err != nil {
-		return nil, errors.New(fmt.Sprintf("Error while json parsing %s", err))
+		return nil, fmt.Errorf("Error while json parsing %s", err)
 	}
 
 	return jsonObj, nil

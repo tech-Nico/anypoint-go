@@ -72,7 +72,7 @@ func Test_FindEnvironments(t *testing.T) {
 		t.Errorf("I was expecting to find environment %q but it couldn't be found", searchEnv)
 	}
 
-	app, err := api.ApplicationsByName(orgId, searchEnv, "ciccio")
+	app, err := api.GetApplicationByName(orgId, searchEnv, "ciccio")
 
 	if err != nil {
 		t.Fatalf("GetApplication did not work while searching for app %q : %s", appName, err)

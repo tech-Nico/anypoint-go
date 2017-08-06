@@ -21,7 +21,6 @@ import (
 	"crypto/tls"
 	"github.com/tech-nico/anypoint-cli/utils"
 	"fmt"
-	"errors"
 	"io"
 )
 
@@ -125,7 +124,7 @@ func (client *RestClient) GET(path string) ([]byte, error) {
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("Error while reading response for %s : %s ", path, err))
+		return nil, fmt.Errorf("Error while reading response for %s : %s ", path, err)
 	}
 
 	utils.Debug(logResponse("GET", path, res))

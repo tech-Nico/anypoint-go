@@ -18,13 +18,28 @@ import (
 	"os"
 	"text/tabwriter"
 	"github.com/spf13/viper"
+	"strings"
+)
+
+const (
+	tabwriterMinWidth = 10
+	tabwriterWidth    = 4
+	tabwriterPadding  = 3
+	tabwriterPadChar  = ' '
+	tabwriterFlags    = 0
+)
+
+const (
+	OUTPUT_JSON = "json"
+	OUTPUT_YAML = "yaml"
+	OUTPUT_LIST = "list"
 )
 
 func tabularize(elems []string) string {
 	toReturn := ""
 
 	for _, val := range elems {
-		toReturn = toReturn + val + "\t"
+		toReturn = toReturn + strings.TrimSpace(val) + "\t"
 	}
 
 	return toReturn
@@ -32,7 +47,7 @@ func tabularize(elems []string) string {
 
 func PrintTabular(headers []string, data [][]string) {
 
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', tabwriter.FilterHTML)
+	w := tabwriter.NewWriter(os.Stdout, tabwriterMinWidth, tabwriterWidth, tabwriterPadding, tabwriterPadChar, tabwriterFlags)
 	defer w.Flush()
 	fmt.Println("")
 	headersStr := tabularize(headers)

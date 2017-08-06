@@ -16,7 +16,6 @@ package cmd
 import (
 	"fmt"
 
-	"errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/tech-nico/anypoint-cli/rest"
@@ -49,7 +48,7 @@ var loginCmd = &cobra.Command{
 		}
 
 		if username == "" {
-			errors.New("Please specify --username")
+			return fmt.Errorf("Please specify --username")
 		}
 
 		if password == "" {
@@ -57,12 +56,10 @@ var loginCmd = &cobra.Command{
 		}
 
 		auth := rest.NewAuthWithCredentials(uri, username, password)
-		fmt.Printf("Login successful. Got token '%s'", auth.Token)
 		viper.Set(utils.KEY_TOKEN, auth.Token)
 		viper.Set(utils.KEY_URI, uri)
 		if orgPath != "" {
 			orgId := auth.FindBusinessGroup(orgPath)
-			fmt.Printf("The orgId is '%s'\n", orgId)
 			viper.Set(utils.KEY_ORG_ID, orgId)
 		}
 		utils.WriteConfig()
