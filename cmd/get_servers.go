@@ -73,10 +73,21 @@ func printServers(servers []interface{}) {
 		deployments := server["deployments"].([]interface{})
 		name := fmt.Sprint(server["name"])
 		serverType := fmt.Sprint(server["type"])
-		runtimeType := fmt.Sprint(details["type"])
+		var runtimeType, version string
+
+		if serverType == "CLUSTER" {
+			servers := details["servers"].([]interface{})
+			firstServer := servers[0].(map[string]interface{})
+			firstServerDetail := firstServer["details"].(map[string]interface{})
+			runtimeType = fmt.Sprint(firstServerDetail["type"])
+			version = fmt.Sprint(firstServerDetail["runtimeVersion"])
+		} else {
+			runtimeType = fmt.Sprint(details["type"])
+			version = fmt.Sprint(details["runtimeVersion"])
+		}
 		status := fmt.Sprint(server["status"])
 		agent := fmt.Sprint(details["agentVersion"])
-		version := fmt.Sprint(details["runtimeVersion"])
+
 		numApps := fmt.Sprint(len(deployments))
 
 		row := []string{name, serverType, runtimeType, status, version, agent, numApps}
