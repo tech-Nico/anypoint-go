@@ -63,7 +63,7 @@ to quickly create a Cobra application.`,
 
 func printServers(servers []interface{}) {
 
-	headers := []string{"NAME", "TYPE", "STATUS", "VERSION", "AGENT", "N. APPS"}
+	headers := []string{"NAME", "SERVER TYPE", "RUNTIME TYPE", "STATUS", "VERSION", "AGENT", "N. APPS"}
 
 	data := make([][]string, 0)
 	for _, val := range servers {
@@ -72,13 +72,14 @@ func printServers(servers []interface{}) {
 		details := server["details"].(map[string]interface{})
 		deployments := server["deployments"].([]interface{})
 		name := fmt.Sprint(server["name"])
-		serverType := fmt.Sprint(details["type"])
+		serverType := fmt.Sprint(server["type"])
+		runtimeType := fmt.Sprint(details["type"])
 		status := fmt.Sprint(server["status"])
 		agent := fmt.Sprint(details["agentVersion"])
 		version := fmt.Sprint(details["runtimeVersion"])
 		numApps := fmt.Sprint(len(deployments))
 
-		row := []string{name, serverType, status, version, agent, numApps}
+		row := []string{name, serverType, runtimeType, status, version, agent, numApps}
 		data = append(data, row)
 	}
 

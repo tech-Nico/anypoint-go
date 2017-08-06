@@ -23,6 +23,7 @@ import (
 	"strings"
 	"syscall"
 	"github.com/tech-nico/anypoint-cli/utils"
+	"log"
 )
 
 var username string
@@ -60,6 +61,9 @@ var loginCmd = &cobra.Command{
 		viper.Set(utils.KEY_URI, uri)
 		if orgPath != "" {
 			orgId := auth.FindBusinessGroup(orgPath)
+			utils.Debug(func() {
+				log.Printf("Org %q -> ID %q", orgPath, orgId)
+			})
 			viper.Set(utils.KEY_ORG_ID, orgId)
 		}
 		utils.WriteConfig()
