@@ -19,6 +19,7 @@ import (
 	"text/tabwriter"
 	"github.com/spf13/viper"
 	"strings"
+	"encoding/json"
 )
 
 const (
@@ -64,4 +65,34 @@ func Debug(doSomething func()) {
 	if viper.GetBool(KEY_DEBUG) {
 		doSomething()
 	}
+}
+
+func PrintObject(objects []interface{}, headers []string, extractTabularDataFunc func([]interface{}) [][]string) {
+
+	switch viper.GetString(KEY_FORMAT) {
+	case OUTPUT_JSON:
+		PrintAsJSON(objects)
+		break;
+	case OUTPUT_YAML:
+		panic("YAML output not implemented yet")
+	case OUTPUT_LIST:
+		PrintAsList(objects, extractTabularDataFunc, headers)
+	default:
+		PrintAsList(objects, extractTabularDataFunc, headers)
+	}
+}
+
+func PrintAsList(objects []interface{}, extractTabularDataFunc func([]interface{}) [][]string, headers []string) {
+
+	data := extractTabularDataFunc(objects)
+
+	PrintTabular(headers, data)
+}
+
+func PrintAsJSON(objects []interface{}) {
+	b, err := json.MarshalIndent(objects, "", "  ")
+	if err != nil {
+		fmt.Println("Error while marshalling output:", err)
+	}
+	os.Stdout.Write(b)
 }

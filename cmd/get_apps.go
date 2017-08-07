@@ -63,7 +63,8 @@ to quickly create a Cobra application.`,
 			}
 		}
 
-		printApps(apps)
+		headers := []string{"NAME", "SERVER TYPE", "SERVER NAME", "STATUS", "FILE"}
+		utils.PrintObject(apps, headers, printApps)
 		return nil
 	},
 }
@@ -75,8 +76,7 @@ func init() {
 
 }
 
-func printApps(apps []interface{}) {
-	headers := []string{"NAME", "SERVER TYPE", "SERVER NAME", "STATUS", "FILE"}
+func printApps(apps []interface{}) [][]string {
 
 	data := make([][]string, 0)
 	for _, val := range apps {
@@ -98,5 +98,5 @@ func printApps(apps []interface{}) {
 		data = append(data, row)
 	}
 
-	utils.PrintTabular(headers, data)
+	return data
 }

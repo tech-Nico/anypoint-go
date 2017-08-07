@@ -54,17 +54,14 @@ to quickly create a Cobra application.`,
 		if err != nil {
 			return fmt.Errorf("Error in retrieving servers: %s", err)
 		}
-
-		printServers(servers)
+		headers := []string{"NAME", "SERVER TYPE", "RUNTIME TYPE", "STATUS", "VERSION", "AGENT", "N. APPS"}
+		utils.PrintObject(servers, headers, extractList)
 
 		return nil
 	},
 }
 
-func printServers(servers []interface{}) {
-
-	headers := []string{"NAME", "SERVER TYPE", "RUNTIME TYPE", "STATUS", "VERSION", "AGENT", "N. APPS"}
-
+func extractList(servers []interface{}) [][]string {
 	data := make([][]string, 0)
 	for _, val := range servers {
 
@@ -94,7 +91,7 @@ func printServers(servers []interface{}) {
 		data = append(data, row)
 	}
 
-	utils.PrintTabular(headers, data)
+	return data
 }
 
 func init() {

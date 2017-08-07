@@ -21,7 +21,6 @@ import (
 	"github.com/spf13/viper"
 	"github.com/tech-nico/anypoint-cli/rest"
 	"github.com/tech-nico/anypoint-cli/utils"
-	"encoding/json"
 	"log"
 )
 
@@ -56,33 +55,20 @@ var apiCmd = &cobra.Command{
 			Filter:    "", //TODO
 		}
 
-		format := viper.GetString(utils.KEY_FORMAT)
-		switch format {
-		case "list":
-			res, err := apiClient.SearchAPIAsJSON(viper.GetString(utils.KEY_ORG_ID), searchParameter)
-			if err != nil {
-				log.Fatalf("Error when searching for api %s - %s", searchParameter.Name, err)
-			}
-
-			total := res["total"].(float64)
-			if total > 0 {
-				apis := res["apis"]
-				printAPIs(apis.([]interface{}))
-			}
-			break
-		case "json":
-			res, err := apiClient.SearchAPIAsJSON(viper.GetString(utils.KEY_ORG_ID), searchParameter)
-			if err != nil {
-				log.Fatalf("Error when searching for api %s - %s", searchParameter.Name, err)
-			}
-			b, err := json.MarshalIndent(res, "", "  ")
-			if err != nil {
-				fmt.Println("error:", err)
-			}
-			os.Stdout.Write(b)
-			break
+		res, err := apiClient.SearchAPIAsJSON(viper.GetString(utils.KEY_ORG_ID), searchParameter)
+		if err != nil {
+			log.Fatalf("Error when searching for api %s - %s", searchParameter.Name, err)
 		}
 
+		total := res["total"].(float64)
+		apis := make([]interface{}, 0)
+
+		if total > 0 {
+			apis = res["apis"].([]interface{})
+		}
+
+		headers := []string{"API NAME", "VERSION NAME", "API ID", "VERSION ID", "HAS PORTAL"}
+		utils.PrintObject(apis, headers, getAPISTabularData)
 
 	},
 }
@@ -106,9 +92,7 @@ func init() {
 	apiCmd.Flags().IntVar(&limit, "limit", 25, "Number of results to return. Default to 25")
 }
 
-func printAPIs(apis []interface{}) {
-	headers := []string{"API NAME", "VERSION NAME", "API ID", "VERSION ID", "HAS PORTAL"}
-
+func getAPISTabularData(apis []interface{}) [][]string {
 	data := make([][]string, 0)
 	for _, api := range apis {
 		versions := api.(map[string]interface{})["versions"].([]interface{})
@@ -124,6 +108,6 @@ func printAPIs(apis []interface{}) {
 		}
 	}
 
-	utils.PrintTabular(headers, data)
+	return data
 }
 
