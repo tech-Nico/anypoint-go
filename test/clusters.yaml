@@ -1,0 +1,15 @@
+clusters:
+  - cluster_name: "SCRIPTED"
+    mulsticast: false
+    servers:
+      - name: "DIGITAL-PRD-WK-CLUS-B-GW"
+        ip: "192.168.0.4"
+      - name: "DIGITAL-PRD-SY-CLUS-B-GW"
+        ip: "192.168.0.4"
+#  - cluster_name: SECOND CLUSTER
+#    multicast: false
+#    servers:
+#      - name: "DIGITAL-PRD-SY-1B-CLUS-4-GW"
+#        ip: "11.1.1.1"
+#      - name: "DIGITAL-PRD-WK-1B-CLUS-4-GW"
+#        ip: "11.1.1.2"

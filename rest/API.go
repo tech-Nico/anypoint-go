@@ -20,6 +20,7 @@ import (
 	"strings"
 	"github.com/tech-nico/anypoint-cli/utils"
 	"log"
+	"net/http"
 )
 
 const (
@@ -33,21 +34,11 @@ const (
 	ARM               = "/armui/api/v1"
 	APPLICATIONS      = ARM + "/applications"
 	SERVERS           = ARM + "/servers"
+	HYBRID            = "/hybrid/api/v1"
+	CLUSTERS          = HYBRID + "/clusters"
+	CLUSTER           = HYBRID + "/clusters/{clusterId}"
 )
 
-type Endpoint struct {
-	Id                   int                        `json:"id"`
-	OrgID                string                `json:"masterOrganizationId"`
-	ApiID                int
-	VersionID            int                `json:"apiVersionId"`
-	Type                 string                `json:"type"`
-	Uri                  string                    `json:"uri"`
-	ProxyUri             string                `json:"proxyUri"`
-	ProxyRegistrationUri string `json:"proxyRegistrationUri"`
-	IsCloudHub           bool                `json:"isCloudHub"`
-	ReferencesUserDomain bool    `json:"referencesUserDomain"`
-	ResponseTimeout      int            `json:"responseTimeout"`
-}
 
 type API struct {
 	client *RestClient
@@ -350,6 +341,60 @@ func (api *API) getArm(path, orgId, environment string) ([]interface{}, error) {
 
 }
 
+func (api *API) postARM(path, orgId, environment string, payload interface{}, bodyContentType ContentType, responseObj interface{}) (*http.Response, error) {
+	env, err := api.FindEnvironmentByName(orgId, environment)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if env == nil {
+		return nil, fmt.Errorf("Environment %q not found", environment)
+	}
+	api.client.AddEnvHeader(env["id"].(string))
+	api.client.AddOrgHeader(orgId)
+
+	resp, err := api.client.POST(payload, path, bodyContentType, responseObj)
+
+	if err != nil {
+		return nil, fmt.Errorf("postARM: Error when posting with path %q : %s", path, err)
+	}
+
+	utils.Debug(func() {
+		log.Printf("POST %q response : %s", path, resp)
+	})
+
+	return resp, nil
+
+}
+
+func (api *API) deleteARM(path, orgId, environment string, payload []byte, bodyContentType ContentType, responseObj interface{}) (*http.Response, error) {
+	env, err := api.FindEnvironmentByName(orgId, environment)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if env == nil {
+		return nil, fmt.Errorf("deleteARM: Environment %q not found", environment)
+	}
+	api.client.AddEnvHeader(env["id"].(string))
+	api.client.AddOrgHeader(orgId)
+
+	resp, err := api.client.DELETE(payload, path, bodyContentType, responseObj)
+
+	if err != nil {
+		return nil, fmt.Errorf("deleteARM: Error when posting with path %q : %s", path, err)
+	}
+
+	utils.Debug(func() {
+		log.Printf("DELETE %q response : %s", path, resp)
+	})
+
+	return resp, nil
+
+}
+
 func (api *API) GetApplications(orgId, environment string) ([]interface{}, error) {
 	return api.getArm(APPLICATIONS, orgId, environment)
 }
@@ -364,7 +409,7 @@ func (api *API) SearchServers(orgId, environment, serverName string, ) ([]interf
 	if err != nil {
 		return nil, fmt.Errorf("Error while searching for server %q : %s", serverName, err)
 	}
-
+	utils.Debug(func() { log.Printf("SearchServers: all servers found: %s", servers) })
 	toReturn := make([]interface{}, 0)
 
 	for _, server := range servers {
@@ -376,6 +421,102 @@ func (api *API) SearchServers(orgId, environment, serverName string, ) ([]interf
 	}
 
 	return toReturn, nil
+}
+
+/**
+UNICAST REQUEST: POST
+{
+ "name":"UNICAST",
+ "multicastEnabled":false,
+ "servers":[
+ 	{
+ 		"serverId":20,
+ 		"serverIp":"10.8.8.3"
+ 	},
+ 	{
+ 		"serverId":19,
+ 		"serverIp":"10.8.8.3"
+ 	}
+ ]
+}
+
+MULTICAST REQUEST:
+{
+	"name":"MULTICAST",
+	"multicastEnabled":true,
+	"servers":[
+		{"serverId":20},
+		{"serverId":19}
+	]
+}
+
+ */
+func (api *API) CreateCluster(orgId, environment string, cluster *Cluster) (string, error) {
+
+	for idx, server := range cluster.Servers {
+
+		serversJson, err := api.SearchServers(orgId, environment, server.Name)
+
+		if len(serversJson) == 0 {
+			return "", fmt.Errorf("Server %s could not be found while creating cluster %s", server.Name, cluster.ClusterName)
+		}
+
+		serverJson := serversJson[0]
+		if err == nil {
+			id := serverJson.(map[string]interface{})["id"].(float64)
+			server.ID = id
+			cluster.Servers[idx] = server
+			fmt.Printf("\nCopied server %s", server)
+		}
+
+		if cluster.Multicast {
+			server.Ip = nil
+		}
+
+	}
+
+	utils.Debug(func() {
+		log.Printf("POSTing payload %s", cluster)
+	})
+
+	var clusterResp interface{}
+	httpResp, err := api.postARM(CLUSTERS, orgId, environment, cluster, Application_Json, clusterResp)
+
+	if err != nil {
+		return "", fmt.Errorf("CreateCluster: Error while creating cluster %s : %s", cluster.ClusterName, err)
+	}
+
+	utils.Debug(func() {
+		log.Printf("CreateCluster: Cluster creation response: %v", clusterResp)
+		log.Printf("CreateCluster: http response object: %s", httpResp)
+	})
+
+	return "NULL", nil
+}
+
+func (api *API) DeleteCluster(orgId, environmentName, clusterName string) (interface{}, error) {
+
+	server, err := api.SearchServers(orgId, environmentName, clusterName)
+	if err != nil {
+		return nil, fmt.Errorf("DeleteCluster: Error while searching for server %s : %s", clusterName, err)
+	}
+	if len(server) != 1 {
+		return nil, fmt.Errorf("DeleteCluster: Exected only one server to be found when searching for cluster %q", clusterName)
+	}
+
+	serverObj := server[0].(map[string]interface{})
+	serverId := fmt.Sprint(serverObj["id"])
+	path := strings.Replace(CLUSTER, "{clusterId}", serverId, -1)
+
+	var deleteResponse interface{}
+	_, err = api.deleteARM(path, orgId, environmentName, nil, Application_Json, deleteResponse)
+
+	if err != nil {
+		return nil, fmt.Errorf("DeleteCluster: Error while removing cluster %q : %s", clusterName, err)
+	}
+
+	return deleteResponse, nil
+
 }
 
 func getSearchFilter(filter string) Filters {

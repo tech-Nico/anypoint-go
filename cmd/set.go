@@ -17,6 +17,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var inputFile string
+
 // apiCmd represents the api command
 var setCmd = &cobra.Command{
 	Use:   "set",
@@ -31,5 +33,5 @@ Specify --help for a list of objects you can set.`,
 
 func init() {
 	RootCmd.AddCommand(setCmd)
-
+	setCmd.PersistentFlags().StringVarP(&inputFile, "file", "f", "", "Name of the YAML file to set the required resource")
 }

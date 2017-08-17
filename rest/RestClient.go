@@ -22,6 +22,7 @@ import (
 	"github.com/tech-nico/anypoint-cli/utils"
 	"fmt"
 	"io"
+	"net/http/httputil"
 )
 
 type HttpError struct {
@@ -30,6 +31,8 @@ type HttpError struct {
 }
 
 type ContentType int
+
+var headers map[string]string = make(map[string]string, 0)
 
 const (
 	Application_Json            ContentType = iota
@@ -81,17 +84,26 @@ func NewRestClient(uri string) (*RestClient) {
 }
 
 func (client *RestClient) AddAuthHeader(token string) (*RestClient) {
-	client.Sling.Add("Authorization", "Bearer "+token)
+	if headers["Authorization"] == "" {
+		client.Sling.Add("Authorization", "Bearer "+token)
+		headers["Authorization"] = token
+	}
 	return client
 }
 
 func (client *RestClient) AddOrgHeader(orgId string) (*RestClient) {
-	client.Sling.Add("X-ANYPNT-ORG-ID", orgId)
+	if headers["X-ANYPNT-ORG-ID"] == "" {
+		client.Sling.Add("X-ANYPNT-ORG-ID", orgId)
+		headers["X-ANYPNT-ORG-ID"] = orgId
+	}
 	return client
 }
 
 func (client *RestClient) AddEnvHeader(envId string) (*RestClient) {
-	client.Sling.Add("X-ANYPNT-ENV-ID", envId)
+	if headers["X-ANYPNT-ENV-ID"] == "" {
+		client.Sling.Add("X-ANYPNT-ENV-ID", envId)
+		headers["X-ANYPNT-ENV-ID"] = envId
+	}
 	return client
 }
 
@@ -132,7 +144,7 @@ func (client *RestClient) GET(path string) ([]byte, error) {
 	return body, nil
 }
 
-//POST - Perform an HTTP POST
+//PATCH - Perform an HTTP PATCH
 func (client *RestClient) PATCH(body interface{}, path string, cType ContentType, responseObj interface{}) (*http.Response, error) {
 
 	utils.Debug(func() {
@@ -154,14 +166,17 @@ func (client *RestClient) PATCH(body interface{}, path string, cType ContentType
 //POST - Perform an HTTP POST
 func (client *RestClient) POST(body interface{}, path string, cType ContentType, responseObj interface{}) (*http.Response, error) {
 
-	utils.Debug(func() {
-		log.Println("REQEST")
-		log.Printf("POST %s%s", client.URI, path)
-	})
-
 	sling := client.Sling.Post(path)
 
 	sling = setSlingBodyForContentType(cType, sling, body)
+	req, err := sling.Request()
+	utils.Debug(func() {
+		log.Println("\nREQEST")
+		log.Printf("\nPOST %s%s", client.URI, path)
+		dump, _ := httputil.DumpRequest(req, true)
+		log.Printf("\nREQUEST DUMP: %s", dump)
+
+	})
 
 	response, err := sling.ReceiveSuccess(responseObj)
 
@@ -171,16 +186,41 @@ func (client *RestClient) POST(body interface{}, path string, cType ContentType,
 
 	return response, httpErr
 }
+
+//DELETE - Perform an HTTP DELETE
+func (client *RestClient) DELETE(body interface{}, path string, cType ContentType, responseObj interface{}) (*http.Response, error) {
+
+	utils.Debug(func() {
+		log.Println("REQEST")
+		log.Printf("POST %s%s", client.URI, path)
+	})
+
+	sling := client.Sling.Delete(path)
+
+	sling = setSlingBodyForContentType(cType, sling, body)
+
+	response, err := sling.ReceiveSuccess(responseObj)
+
+	utils.Debug(logResponse("DELETE", path, response))
+
+	httpErr := validateResponse(response, err, "DELETE", path)
+
+	return response, httpErr
+}
+
+
 func setSlingBodyForContentType(cType ContentType, sling *sling.Sling, body interface{}) *sling.Sling {
-	switch cType {
-	case Application_Json:
-		sling = sling.BodyJSON(body)
-	case Application_Form_Urlencoded:
-		sling = sling.BodyForm(body)
-	case Application_OctetStream:
-		sling = sling.Body(body.(io.Reader))
-	default:
-		sling = sling.Body(body.(io.Reader))
+	if body != nil {
+		switch cType {
+		case Application_Json:
+			sling = sling.BodyJSON(body)
+		case Application_Form_Urlencoded:
+			sling = sling.BodyForm(body)
+		case Application_OctetStream:
+			sling = sling.Body(body.(io.Reader))
+		default:
+			sling = sling.Body(body.(io.Reader))
+		}
 	}
 	return sling
 }
@@ -212,6 +252,7 @@ func logResponse(method, path string, response *http.Response) (func()) {
 		log.Printf("RESPONSE")
 		log.Printf("%s %s : %s", method, path, response.Status)
 		log.Printf("Response Headers: %s", response.Header)
+		httputil.DumpResponse(response, true)
 	}
 
 }

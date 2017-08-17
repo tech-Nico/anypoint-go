@@ -20,6 +20,8 @@ import (
 	"github.com/spf13/viper"
 	"strings"
 	"encoding/json"
+	"io/ioutil"
+	"gopkg.in/yaml.v2"
 )
 
 const (
@@ -96,3 +98,23 @@ func PrintAsJSON(objects []interface{}) {
 	}
 	os.Stdout.Write(b)
 }
+
+func OpenYAMLFile(f string, t interface{}) (error) {
+
+	fileContent, err := ioutil.ReadFile(f)
+
+	if err != nil {
+		return fmt.Errorf("Error while opening yaml file %q. Error: %s", f, err)
+	}
+
+	err = yaml.Unmarshal(fileContent, t)
+
+	if err != nil {
+		return fmt.Errorf("Error while parsing YAML file %q . Error: %s", f, err)
+	}
+
+	return nil
+}
+
+
+
